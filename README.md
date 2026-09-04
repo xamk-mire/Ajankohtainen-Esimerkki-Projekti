@@ -44,7 +44,7 @@ Never commit `.env`. The committed template is `.env.example`. Compose `web` alr
 | `api` OpenAPI | 8000 | http://localhost:8000/docs |
 | `db` (Postgres) | 5432 | not a web page — used by the API |
 
-On the home page, API health should show **OK** (the browser calls `http://localhost:8000`, not Compose hostnames `api` or `db`).
+The frontend is React + TypeScript (Vite) with **Tailwind CSS** and **shadcn/ui**. On the home page, API health should show **OK** (the browser calls `http://localhost:8000`, not Compose hostnames `api` or `db`).
 
 ## What Compose runs
 
@@ -101,7 +101,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | Home page health is **failed** | Confirm http://localhost:8000/health in the browser; CORS allowlist is `http://localhost:5173` (open that origin, not a random port) |
 | UI does not update on OneDrive | Vite in Compose uses polling; if it is still stuck, restart `web`: `docker compose restart web` |
 | API cannot reach Postgres from a container | Do not use `localhost` as the DB host **inside** `api` — Compose sets host `db` |
-| `/health/db` returns 503 | Postgres is down or unreachable; `/health` should still be 200 (liveness) |
+| `web` fails with `Cannot find package '@tailwindcss/vite'` | The `web_node_modules` volume is stale. Stop Compose, then `docker compose up --build`. The `web` container now runs `npm install` on start. |
 
 ## Coming next (not Sprint 1)
 
