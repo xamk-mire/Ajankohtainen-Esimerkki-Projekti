@@ -11,3 +11,11 @@
 .home p {
   max-width: 36rem;
 }
+
+.health-ok {
+  color: #15803d;
+}
+
+.health-failed {
+  color: #b91c1c;
+}

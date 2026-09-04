@@ -46,7 +46,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (usually http://localhost:5173).
+Open the URL Vite prints (usually http://localhost:5173). Copy `frontend/.env.example` → `frontend/.env` so `VITE_API_BASE_URL` is `http://localhost:8000` (a browser URL, not a Compose hostname). The home page shows API health OK / failed.
 
 ## Configuration
 
@@ -55,6 +55,7 @@ Copy `.env.example` → `.env` at the repo root. Git ignores `.env`; commit only
 | Variable | API reads it today | When it is used |
 | --- | --- | --- |
 | `API_HOST`, `API_PORT` | Yes (settings) | Local Uvicorn still uses the CLI flags; Compose/Dockerfile will match these |
-| `CORS_ORIGINS` | Yes (settings) | CORS middleware in S1-11 (`http://localhost:5173`) |
+| `CORS_ORIGINS` | Yes (settings) | CORS allowlist for Vite (`http://localhost:5173`) |
+| `VITE_API_BASE_URL` | Frontend only | Browser calls the API at `http://localhost:8000` |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Yes (settings) | Compose `db` service in S1-07 |
 | `DATABASE_URL` | Yes (settings) | Local Uvicorn: `localhost`. Compose `api` service: hostname `db` (override in `docker-compose.yml`) |
