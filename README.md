@@ -13,6 +13,8 @@ Sprint guide: [docs/sprints/README.md](docs/sprints/README.md)
   - Python 3.12+ (local Uvicorn)
   - Node.js 22+ and npm (local Vite)
 
+GitHub Actions (`.github/workflows/smoke.yml`) installs backend deps and imports `app.main:app` on every push and pull request.
+
 ## Quick start (Compose)
 
 From the repository root in **Windows PowerShell**:
