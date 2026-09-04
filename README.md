@@ -1,8 +1,25 @@
 # Exercise Progress Tracker
 
-This repository is a monorepo for the Exercise Progress Tracker course project: `backend/` will hold the FastAPI API, `frontend/` the React (Vite + TypeScript) SPA, and `docs/` the sprint tickets, templates, and course materials. Later tickets in Sprint 1 will add Docker Compose and a placeholder UI; this README is only a layout stub until S1-13.
+This repository is a monorepo for the Exercise Progress Tracker course project: `backend/` will hold the FastAPI API, `frontend/` the React (Vite + TypeScript) SPA, and `docs/` the sprint tickets, templates, and course materials. Later tickets in Sprint 1 will add a placeholder UI; this README is only a layout stub until S1-13.
 
-## Run the API
+## Docker Compose (`db` + `api`)
+
+Copy `.env.example` → `.env`, then from the repo root:
+
+```bash
+docker compose up --build
+```
+
+Published ports:
+
+| Service | Host port | URL / notes |
+| --- | --- | --- |
+| `api` | 8000 | http://localhost:8000/health and http://localhost:8000/docs |
+| `db` | 5432 | PostgreSQL (`POSTGRES_*` from `.env`) |
+
+`DATABASE_URL` is passed into `api` from `.env`. The hostname inside the API container is finalized in S1-08 (`db` instead of `localhost`).
+
+## Run the API locally (without Compose)
 
 From `backend/`:
 
