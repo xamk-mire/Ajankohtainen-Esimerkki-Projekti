@@ -19,3 +19,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Open http://localhost:8000/docs for the interactive OpenAPI UI, or http://localhost:8000/health for the liveness check.
+
+## Configuration
+
+Copy `.env.example` → `.env` at the repo root. Git ignores `.env`; commit only the example.
+
+| Variable | API reads it today | When it is used |
+| --- | --- | --- |
+| `API_HOST`, `API_PORT` | Yes (settings) | Local Uvicorn still uses the CLI flags; Compose/Dockerfile will match these |
+| `CORS_ORIGINS` | Yes (settings) | CORS middleware in S1-11 (`http://localhost:5173`) |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Yes (settings) | Compose `db` service in S1-07 |
+| `DATABASE_URL` | Yes (settings) | API → Postgres in S1-08. Use `localhost` on your machine; inside the API container the host is `db` |
