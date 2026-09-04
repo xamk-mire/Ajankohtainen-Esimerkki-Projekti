@@ -37,6 +37,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Open http://localhost:8000/docs for the interactive OpenAPI UI, or http://localhost:8000/health for the liveness check.
 
+## Run the frontend locally
+
+From `frontend/` (React Router and the health indicator come in later tickets):
+
+```powershell
+npm install
+npm run dev
+```
+
+Open the URL Vite prints (usually http://localhost:5173).
+
 ## Configuration
 
 Copy `.env.example` → `.env` at the repo root. Git ignores `.env`; commit only the example.
