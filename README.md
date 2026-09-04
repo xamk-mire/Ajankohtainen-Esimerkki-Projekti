@@ -37,7 +37,8 @@ Never commit `.env`. The committed template is `.env.example`. Compose `web` alr
 | Service | Port | Open this |
 | --- | --- | --- |
 | `web` (Vite UI) | 5173 | http://localhost:5173 |
-| `api` health | 8000 | http://localhost:8000/health |
+| `api` health | 8000 | http://localhost:8000/health (process up) |
+| `api` DB health | 8000 | http://localhost:8000/health/db (Postgres reachable; 503 if not) |
 | `api` OpenAPI | 8000 | http://localhost:8000/docs |
 | `db` (Postgres) | 5432 | not a web page — used by the API |
 
@@ -98,6 +99,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | Home page health is **failed** | Confirm http://localhost:8000/health in the browser; CORS allowlist is `http://localhost:5173` (open that origin, not a random port) |
 | UI does not update on OneDrive | Vite in Compose uses polling; if it is still stuck, restart `web`: `docker compose restart web` |
 | API cannot reach Postgres from a container | Do not use `localhost` as the DB host **inside** `api` — Compose sets host `db` |
+| `/health/db` returns 503 | Postgres is down or unreachable; `/health` should still be 200 (liveness) |
 
 ## Coming next (not Sprint 1)
 
