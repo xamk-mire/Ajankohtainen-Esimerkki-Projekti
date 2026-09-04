@@ -39,7 +39,7 @@ Open http://localhost:8000/docs for the interactive OpenAPI UI, or http://localh
 
 ## Run the frontend locally
 
-From `frontend/` (React Router and the health indicator come in later tickets):
+From `frontend/`:
 
 ```powershell
 npm install
