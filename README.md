@@ -17,7 +17,7 @@ Published ports:
 | `api` | 8000 | http://localhost:8000/health and http://localhost:8000/docs |
 | `db` | 5432 | PostgreSQL (`POSTGRES_*` from `.env`) |
 
-`DATABASE_URL` is passed into `api` from `.env`. The hostname inside the API container is finalized in S1-08 (`db` instead of `localhost`).
+`DATABASE_URL` in `.env` stays on `localhost` for local Uvicorn. Compose overrides it for the `api` container so the host is the `db` service. The API waits until Postgres is healthy (`pg_isready`) before starting.
 
 ## Run the API locally (without Compose)
 
@@ -46,4 +46,4 @@ Copy `.env.example` → `.env` at the repo root. Git ignores `.env`; commit only
 | `API_HOST`, `API_PORT` | Yes (settings) | Local Uvicorn still uses the CLI flags; Compose/Dockerfile will match these |
 | `CORS_ORIGINS` | Yes (settings) | CORS middleware in S1-11 (`http://localhost:5173`) |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Yes (settings) | Compose `db` service in S1-07 |
-| `DATABASE_URL` | Yes (settings) | API → Postgres in S1-08. Use `localhost` on your machine; inside the API container the host is `db` |
+| `DATABASE_URL` | Yes (settings) | Local Uvicorn: `localhost`. Compose `api` service: hostname `db` (override in `docker-compose.yml`) |

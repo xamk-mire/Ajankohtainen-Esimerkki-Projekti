@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     postgres_user: str = "tracker"
     postgres_password: str = "changeme"
     postgres_db: str = "exercise_tracker"
+    # Local Uvicorn: host is localhost (repo-root .env). Compose overrides this
+    # for the api container so the hostname is the `db` service, not localhost.
     database_url: str = (
         "postgresql+psycopg://tracker:changeme@localhost:5432/exercise_tracker"
     )
