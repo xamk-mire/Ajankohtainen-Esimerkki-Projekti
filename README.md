@@ -88,6 +88,12 @@ Browse Postgres in the browser at http://localhost:8000/admin. This login is **n
 
 Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, and `SQLADMIN_SECRET_KEY` on shared machines. After seed you should see unit types, exercise activity types, and activity↔unit links (including Running’s duration + distance and a strength exercise’s `per_set` flags).
 
+## Auth API
+
+`POST /auth/register` creates an app user and returns **public fields only** (`id`, `email`, `display_name`) with **201**. It does **not** issue a JWT — the frontend should call login after register (S2-11). Duplicate email → **409**. Password and `password_hash` never appear in the response.
+
+Try it from http://localhost:8000/docs.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell
