@@ -24,7 +24,11 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Wait until `db` is healthy and `api` / `web` are running. Then open the URLs below.
+Wait until `db` is healthy and `api` / `web` are running. Apply the schema, then open the URLs below.
+
+```powershell
+docker compose exec api alembic upgrade head
+```
 
 Stop (keeps the Postgres volume):
 
@@ -56,6 +60,22 @@ The frontend is React + TypeScript (Vite) with **Tailwind CSS** and **shadcn/ui*
 
 Inside the `api` container, `DATABASE_URL` uses hostname `db`. Your local `.env` keeps `localhost` for Uvicorn on Windows. `web` uses `VITE_API_BASE_URL=http://localhost:8000` so the **browser** can reach the API.
 
+## Database migrations (Alembic)
+
+Schema changes live in `backend/alembic/versions/` and use the same `DATABASE_URL` as the API. After Compose is up (or after you recreate the Postgres volume), apply migrations **inside the API container**:
+
+```powershell
+docker compose exec api alembic upgrade head
+```
+
+That creates `users`, `activity_types`, `unit_types`, and `activity_type_unit_types`. Catalog seed data is a later Sprint 2 ticket.
+
+If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
+
+```powershell
+alembic upgrade head
+```
+
 ## Configuration (Sprint 1)
 
 Root `.env` (from `.env.example`):
@@ -77,6 +97,7 @@ Frontend (host Vite only): `VITE_API_BASE_URL=http://localhost:8000` in `fronten
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -102,10 +123,11 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | UI does not update on OneDrive | Vite in Compose uses polling; if it is still stuck, restart `web`: `docker compose restart web` |
 | API cannot reach Postgres from a container | Do not use `localhost` as the DB host **inside** `api` — Compose sets host `db` |
 | `web` fails with `Cannot find package '@tailwindcss/vite'` | The `web_node_modules` volume is stale. Stop Compose, then `docker compose up --build`. The `web` container now runs `npm install` on start. |
+| `relation "users" does not exist` (or similar) | Schema is not applied yet. Rebuild `api` if Alembic is missing, then `docker compose exec api alembic upgrade head` |
 
 ## Coming next (not Sprint 1)
 
-Sprint 2 adds JWT register/login, the exercise catalog, Alembic, and SQLAdmin at `/admin`. Those are **not** required to demo Sprint 1.
+Sprint 2 continues with catalog seed data, SQLAdmin at `/admin`, and JWT register/login. Those are **not** required to demo the Sprint 1 shell.
 
 ## Layout
 
