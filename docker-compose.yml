@@ -29,6 +29,8 @@ services:
       SQLADMIN_USERNAME: ${SQLADMIN_USERNAME:-admin}
       SQLADMIN_PASSWORD: ${SQLADMIN_PASSWORD:-admin}
       SQLADMIN_SECRET_KEY: ${SQLADMIN_SECRET_KEY:-change-me-sqladmin-secret}
+      JWT_SECRET: ${JWT_SECRET:-change-me-jwt-secret-use-a-long-random-string}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       # Override .env localhost: inside this container the Postgres hostname is `db`.
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:

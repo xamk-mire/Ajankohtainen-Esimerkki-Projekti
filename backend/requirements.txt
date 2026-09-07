@@ -7,3 +7,4 @@ alembic==1.19.1
 sqladmin==0.30.0
 itsdangerous==2.2.0
 bcrypt==5.0.0
+PyJWT==2.13.0

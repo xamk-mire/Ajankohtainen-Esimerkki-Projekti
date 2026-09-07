@@ -106,6 +106,7 @@ Root `.env` (from `.env.example`):
 | `API_HOST`, `API_PORT` | Documented bind; container CMD uses `0.0.0.0:8000` |
 | `CORS_ORIGINS` | Allowlist for Vite (`http://localhost:5173`) |
 | `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | `/admin` login (default `admin`/`admin`; change on shared machines) |
+| `JWT_SECRET`, `ACCESS_TOKEN_EXPIRE_MINUTES` | App-user JWT signing and expiry (not SQLAdmin). Use a long random `JWT_SECRET` in `.env` |
 
 Frontend (host Vite only): `VITE_API_BASE_URL=http://localhost:8000` in `frontend/.env`.
 

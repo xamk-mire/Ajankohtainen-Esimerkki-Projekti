@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     sqladmin_username: str = "admin"
     sqladmin_password: str = "admin"
     sqladmin_secret_key: str = "change-me-sqladmin-secret"
+    jwt_secret: str = "change-me-jwt-secret-use-a-long-random-string"
+    access_token_expire_minutes: int = 60
 
     @property
     def cors_origin_list(self) -> list[str]:
