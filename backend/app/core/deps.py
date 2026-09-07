@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
@@ -9,7 +9,7 @@ from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.user import User
 
-bearer_scheme = HTTPBearer(auto_error=False)
+bearer_scheme = HTTPBearer(auto_error=False, scheme_name="Bearer")
 
 
 def _unauthorized() -> HTTPException:
@@ -21,7 +21,7 @@ def _unauthorized() -> HTTPException:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
     if credentials is None or credentials.scheme.lower() != "bearer":

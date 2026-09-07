@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy.orm import Session
 
+from app.core.deps import get_current_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserPublic
 from app.services.auth import (
     DuplicateEmailError,
@@ -46,3 +48,8 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
     return TokenResponse(access_token=token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserPublic)
+def me(current_user: User = Security(get_current_user)) -> UserPublic:
+    return UserPublic.model_validate(current_user)
