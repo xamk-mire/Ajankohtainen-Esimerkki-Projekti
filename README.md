@@ -122,7 +122,7 @@ Sprint 3 uses this catalog. After seed, SQLAdmin should show:
 
 Register **password rules** (422 if they fail): at least **8** characters, at most **72** (bcrypt limit), and not a small common list (`password`, `password1`, `12345678`, `123456789`, `qwerty123`, `letmein1`). Login still accepts existing hashes; it does not re-check complexity. A predictable demo password is `demo-pass-1`.
 
-`POST /auth/login` returns `{ "access_token": "<jwt>", "token_type": "bearer" }`. Unknown email and wrong password both return **401** with the same message (`Incorrect email or password`) so accounts cannot be enumerated.
+`POST /auth/login` returns `{ "access_token": "<jwt>", "token_type": "bearer" }`. Unknown email and wrong password both return **401** with the same message (`Incorrect email or password`) so accounts cannot be enumerated. Register and login share one email normalizer: addresses are stored and looked up **lowercased**, so `Alex@Example.com` and `alex@example.com` are the same account.
 
 `GET /auth/me` is protected: send `Authorization: Bearer <jwt>`. Missing, invalid, or expired tokens → **401**. Success → public profile (`id`, `email`, `display_name`) only.
 

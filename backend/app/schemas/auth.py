@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 72
@@ -18,8 +19,16 @@ COMMON_PASSWORDS = frozenset(
 )
 
 
+def normalize_email(value: EmailStr) -> str:
+    """Canonical form for persist and lookup so register/login cannot disagree."""
+    return str(value).strip().lower()
+
+
+NormalizedEmail = Annotated[EmailStr, AfterValidator(normalize_email)]
+
+
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: NormalizedEmail
     password: str = Field(
         min_length=PASSWORD_MIN_LENGTH,
         max_length=PASSWORD_MAX_LENGTH,
@@ -49,7 +58,7 @@ class UserPublic(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: NormalizedEmail
     password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)
 
 
