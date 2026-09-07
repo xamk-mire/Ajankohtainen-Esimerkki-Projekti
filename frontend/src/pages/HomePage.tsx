@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { getApiBaseUrl, getHealth } from '@/api/client'
-import { getToken } from '@/auth/token'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -48,8 +46,8 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle className="text-2xl">Exercise Progress Tracker</CardTitle>
           <CardDescription>
-            Sessions, plans, calendar, and progress pages will be added in later
-            sprints.
+            Protected app shell. Sessions, plans, calendar, and progress pages
+            will nest here in later sprints.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
@@ -63,21 +61,9 @@ export default function HomePage() {
             API health:{' '}
             <Badge variant={healthVariant}>{healthLabel}</Badge>
           </p>
-          {getToken() ? (
-            <p className="text-sm text-muted-foreground">
-              Signed in. A JWT is stored in this browser (survives refresh).
-            </p>
-          ) : (
-            <p className="text-sm">
-              <Link className="text-primary underline-offset-4 hover:underline" to="/login">
-                Log in
-              </Link>
-              {' · '}
-              <Link className="text-primary underline-offset-4 hover:underline" to="/register">
-                Create an account
-              </Link>
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground">
+            Signed in. Later sprints add sessions, plans, and progress here.
+          </p>
         </CardContent>
       </Card>
     </main>

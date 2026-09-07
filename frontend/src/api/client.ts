@@ -129,3 +129,7 @@ export type TokenResponse = {
 export function loginUser(payload: LoginPayload): Promise<TokenResponse> {
   return apiPost<TokenResponse>('/auth/login', payload)
 }
+
+export function getMe(): Promise<UserPublic> {
+  return apiGet<UserPublic>('/auth/me')
+}
