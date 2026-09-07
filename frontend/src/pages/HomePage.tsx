@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getApiBaseUrl, getHealth } from '@/api/client'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -60,6 +61,11 @@ export default function HomePage() {
           <p className="flex items-center gap-2 text-sm">
             API health:{' '}
             <Badge variant={healthVariant}>{healthLabel}</Badge>
+          </p>
+          <p className="text-sm">
+            <Link className="text-primary underline-offset-4 hover:underline" to="/register">
+              Create an account
+            </Link>
           </p>
         </CardContent>
       </Card>

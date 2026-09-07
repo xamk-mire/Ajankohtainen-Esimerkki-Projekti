@@ -96,6 +96,8 @@ Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLA
 
 `GET /auth/me` is protected: send `Authorization: Bearer <jwt>`. Missing, invalid, or expired tokens → **401**. Success → public profile (`id`, `email`, `display_name`) only. In http://localhost:8000/docs, log in, copy the token, click **Authorize**, then call `/auth/me`.
 
+The UI register form is http://localhost:5173/register. On success it **navigates to `/login`** (no auto-login — register does not return a JWT). Duplicate email and validation errors are shown on the form.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell
