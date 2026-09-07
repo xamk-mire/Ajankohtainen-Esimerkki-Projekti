@@ -2,9 +2,9 @@
 
 Full-stack app for logging **training sessions**, viewing personal progress, and (later) AI-assisted feedback from your own history. This repository is a monorepo: FastAPI in `backend/`, React (Vite + TypeScript) in `frontend/`, course tickets in `docs/sprints/`.
 
-**Sprint 1** is the building: Docker Compose starts Postgres, the API, and a placeholder UI. There is no login, exercise catalog, or `/admin` yet—those arrive in Sprint 2.
+**Sprint 1** is Compose (Postgres, API, Vite UI). **Sprint 2** adds the exercise catalog, SQLAdmin, and JWT register/login. Sessions and plans are Sprint 3.
 
-Sprint guide: [docs/sprints/README.md](docs/sprints/README.md)
+Sprint guide: [docs/sprints/README.md](docs/sprints/README.md) · Sprint 2 demo script: [docs/sprints/tickets/sprint-02-tickets.md](docs/sprints/tickets/sprint-02-tickets.md) (intro → *Suggested demo flow*)
 
 ## Prerequisites
 
@@ -24,12 +24,20 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Wait until `db` is healthy and `api` / `web` are running. Apply the schema and catalog seed, then open the URLs below.
+Wait until `db` is healthy and `api` / `web` are running. Apply the schema and catalog seed:
 
 ```powershell
 docker compose exec api alembic upgrade head
 docker compose exec api python -m app.db.init_db
 ```
+
+Generate a real `JWT_SECRET` in `.env` (do not commit that file). Example:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Then recreate `api` so it picks up the secret (`docker compose up -d --force-recreate api`).
 
 Stop (keeps the Postgres volume):
 
@@ -39,6 +47,26 @@ docker compose down
 
 Never commit `.env`. The committed template is `.env.example`. Compose `web` already sets `VITE_API_BASE_URL` for the browser; copy `frontend/.env.example` → `frontend/.env` only if you run Vite on the host.
 
+## Two logins (do not mix these)
+
+A JWT from the app **will not** open SQLAdmin. The SQLAdmin password **will not** call `/auth/me` or sign you into the UI.
+
+| URL | Purpose | Credentials |
+| --- | --- | --- |
+| http://localhost:5173/register then http://localhost:5173/login | **App user** — JWT in `localStorage`, header profile from `/auth/me` | Email / password you create in Register. Not the SQLAdmin user. |
+| http://localhost:8000/admin | **SQLAdmin** — browse Postgres tables | `SQLADMIN_USERNAME` / `SQLADMIN_PASSWORD` from `.env` (local default `admin` / `admin`). Change these on shared machines. Not a JWT. |
+| http://localhost:8000/docs | OpenAPI — try register / login / me | No UI login. For `/auth/me`, Authorize with a Bearer token from `POST /auth/login`. |
+
+## Create the first app user
+
+1. Copy `.env.example` → `.env` at the repo root. Set a long random `JWT_SECRET`. Keep `CORS_ORIGINS=http://localhost:5173` unless you open the UI on another origin.
+2. Start Compose, then run `alembic upgrade head` and `python -m app.db.init_db` (commands above).
+3. Open http://localhost:5173/register. Fill **display name**, **email**, and **password**. Submit. Register does **not** issue a JWT — you are sent to Login.
+4. Sign in at http://localhost:5173/login. Home (`/`) should load; the header shows your **display name** (or email).
+5. **Log out** clears the token and returns to Login. Opening `/` while logged out redirects to Login.
+
+Duplicate email on register → **409** on the form. Wrong login → **Incorrect email or password**.
+
 ## URLs
 
 | Service | Port | Open this |
@@ -47,10 +75,10 @@ Never commit `.env`. The committed template is `.env.example`. Compose `web` alr
 | `api` health | 8000 | http://localhost:8000/health (process up) |
 | `api` DB health | 8000 | http://localhost:8000/health/db (Postgres reachable; 503 if not) |
 | `api` OpenAPI | 8000 | http://localhost:8000/docs |
-| `api` SQLAdmin | 8000 | http://localhost:8000/admin (env login, not JWT) |
+| `api` SQLAdmin | 8000 | http://localhost:8000/admin (env login, **not** JWT) |
 | `db` (Postgres) | 5432 | not a web page — used by the API |
 
-The frontend is React + TypeScript (Vite) with **Tailwind CSS** and **shadcn/ui**. On the home page, API health should show **OK** (the browser calls `http://localhost:8000`, not Compose hostnames `api` or `db`).
+The frontend is React + TypeScript (Vite) with **Tailwind CSS** and **shadcn/ui**. Open the UI as **http://localhost:5173** (not `127.0.0.1`) so it matches `CORS_ORIGINS`. The browser calls `http://localhost:8000`, not Compose hostnames `api` or `db`.
 
 ## What Compose runs
 
@@ -80,13 +108,13 @@ After migrations, load system units, exercise types, and their unit links (idemp
 docker compose exec api python -m app.db.init_db
 ```
 
-This inserts four unit types (`duration_min`, `distance_km`, `reps`, `weight_kg`), cardio and strength exercises (plus `other`), and the activity↔unit links (Running → duration + distance; Bench press → reps + weight per set).
+Sprint 3 uses this catalog. After seed, SQLAdmin should show:
 
-## SQLAdmin (`/admin`)
-
-Browse Postgres in the browser at http://localhost:8000/admin. This login is **not** the later JWT app-user login.
-
-Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, and `SQLADMIN_SECRET_KEY` on shared machines. After seed you should see unit types, exercise activity types, and activity↔unit links (including Running’s duration + distance and a strength exercise’s `per_set` flags).
+| In `/admin` | What to look for |
+| --- | --- |
+| Unit types | Four system units: `duration_min`, `distance_km`, `reps`, `weight_kg` |
+| Activity types | Exercise-level rows (running, cycling, swimming, hiking, bench_press, curls, face_pull, …) plus `other` |
+| Activity↔unit links | Running → duration + distance; a strength exercise (e.g. bench press) → reps + weight with `per_set` |
 
 ## Auth API
 
@@ -94,13 +122,9 @@ Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLA
 
 `POST /auth/login` returns `{ "access_token": "<jwt>", "token_type": "bearer" }`. Unknown email and wrong password both return **401** with the same message (`Incorrect email or password`) so accounts cannot be enumerated.
 
-`GET /auth/me` is protected: send `Authorization: Bearer <jwt>`. Missing, invalid, or expired tokens → **401**. Success → public profile (`id`, `email`, `display_name`) only. In http://localhost:8000/docs, log in, copy the token, click **Authorize**, then call `/auth/me`.
+`GET /auth/me` is protected: send `Authorization: Bearer <jwt>`. Missing, invalid, or expired tokens → **401**. Success → public profile (`id`, `email`, `display_name`) only.
 
-The UI register form is http://localhost:5173/register. On success it **navigates to `/login`** (no auto-login — register does not return a JWT). Duplicate email and validation errors are shown on the form.
-
-The UI login form is http://localhost:5173/login. On success it stores **only** the JWT in `localStorage` (`access_token`) and navigates home. The shared API client sends `Authorization: Bearer <token>` whenever that key is set. Wrong email or password shows **Incorrect email or password**.
-
-`/` is behind a protected layout: missing or invalid JWT (including `GET /auth/me` **401**) clears the token and redirects to `/login`. `/login` and `/register` stay public so they do not loop. The header shows **display name** (or email) from `/auth/me`. **Log out** removes the JWT from `localStorage`, drops in-memory user state, and returns to login.
+The UI stores **only** the JWT in `localStorage` (`access_token`) after login. The shared API client sends `Authorization: Bearer <token>` whenever that key is set. `/` is behind a protected layout; `/login` and `/register` stay public.
 
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
@@ -109,9 +133,9 @@ alembic upgrade head
 python -m app.db.init_db
 ```
 
-## Configuration (Sprint 1)
+## Configuration
 
-Root `.env` (from `.env.example`):
+Root `.env` (from `.env.example`). Placeholders only in Git — put real secrets in `.env`.
 
 | Variable | Used for |
 | --- | --- |
@@ -119,8 +143,8 @@ Root `.env` (from `.env.example`):
 | `DATABASE_URL` | Local Uvicorn (`localhost`). Compose overrides host to `db` |
 | `API_HOST`, `API_PORT` | Documented bind; container CMD uses `0.0.0.0:8000` |
 | `CORS_ORIGINS` | SPA allowlist (exact origins, comma-separated). Default `http://localhost:5173` — not `*`, not `127.0.0.1`, not Compose host `web`. Allows `GET`/`POST`/`OPTIONS` and `Authorization` / `Content-Type`. JWT uses Bearer headers, so `allow_credentials` is off. |
-| `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | `/admin` login (default `admin`/`admin`; change on shared machines) |
-| `JWT_SECRET`, `ACCESS_TOKEN_EXPIRE_MINUTES` | App-user JWT signing and expiry (not SQLAdmin). Use a long random `JWT_SECRET` in `.env` |
+| `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | `/admin` only (default `admin`/`admin`). Change on shared machines. Not app-user login. |
+| `JWT_SECRET`, `ACCESS_TOKEN_EXPIRE_MINUTES` | App-user JWT signing and expiry (not SQLAdmin). Use a long random `JWT_SECRET` in `.env`. |
 
 Frontend (host Vite only): `VITE_API_BASE_URL=http://localhost:8000` in `frontend/.env`.
 
@@ -157,14 +181,16 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | API exits while Postgres is still starting | Compose waits for `pg_isready`; give `db` a few seconds, then `docker compose ps` / `docker compose logs db` |
 | Home page health is **failed** | Confirm http://localhost:8000/health in the browser; CORS allowlist is `http://localhost:5173` (open that origin, not `127.0.0.1` or a random port) |
 | Browser `fetch` to the API fails with a CORS / preflight error | Confirm the page origin matches `CORS_ORIGINS` exactly, rebuild `api` after CORS changes, and check DevTools → Network for a failed `OPTIONS` request |
+| JWT does not open `/admin` (or admin password does not open the app) | Two separate logins — see [Two logins](#two-logins-do-not-mix-these) |
 | UI does not update on OneDrive | Vite in Compose uses polling; if it is still stuck, restart `web`: `docker compose restart web` |
 | API cannot reach Postgres from a container | Do not use `localhost` as the DB host **inside** `api` — Compose sets host `db` |
 | `web` fails with `Cannot find package '@tailwindcss/vite'` | The `web_node_modules` volume is stale. Stop Compose, then `docker compose up --build`. The `web` container now runs `npm install` on start. |
 | `relation "users" does not exist` (or similar) | Schema is not applied yet. Rebuild `api` if Alembic is missing, then `docker compose exec api alembic upgrade head` |
+| Empty unit/activity lists in `/admin` | Run the catalog seed: `docker compose exec api python -m app.db.init_db` |
 
-## Coming next (not Sprint 1)
+## Coming next
 
-Sprint 2 continues with JWT register/login. Those are **not** required to demo the Sprint 1 shell.
+Sprint 3 adds training sessions, clone, plans, and a calendar on top of this catalog and JWT shell.
 
 ## Layout
 
