@@ -90,9 +90,11 @@ Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLA
 
 ## Auth API
 
-`POST /auth/register` creates an app user and returns **public fields only** (`id`, `email`, `display_name`) with **201**. It does **not** issue a JWT — the frontend should call login after register (S2-11). Duplicate email → **409**. Password and `password_hash` never appear in the response.
+`POST /auth/register` creates an app user and returns **public fields only** (`id`, `email`, `display_name`) with **201**. It does **not** issue a JWT — call login next. Duplicate email → **409**. Password and `password_hash` never appear in the response.
 
-Try it from http://localhost:8000/docs.
+`POST /auth/login` returns `{ "access_token": "<jwt>", "token_type": "bearer" }`. Unknown email and wrong password both return **401** with the same message (`Incorrect email or password`) so accounts cannot be enumerated. Send the token as `Authorization: Bearer <jwt>` on protected routes (`GET /auth/me` in the next ticket). In `/docs`, use **Authorize** after that route exists.
+
+Try both from http://localhost:8000/docs.
 
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
