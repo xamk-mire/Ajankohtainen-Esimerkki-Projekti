@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     cors_origins: str = "http://localhost:5173"
+    sqladmin_username: str = "admin"
+    sqladmin_password: str = "admin"
+    sqladmin_secret_key: str = "change-me-sqladmin-secret"
 
     @property
     def cors_origin_list(self) -> list[str]:

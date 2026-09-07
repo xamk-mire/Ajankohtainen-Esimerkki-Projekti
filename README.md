@@ -47,6 +47,7 @@ Never commit `.env`. The committed template is `.env.example`. Compose `web` alr
 | `api` health | 8000 | http://localhost:8000/health (process up) |
 | `api` DB health | 8000 | http://localhost:8000/health/db (Postgres reachable; 503 if not) |
 | `api` OpenAPI | 8000 | http://localhost:8000/docs |
+| `api` SQLAdmin | 8000 | http://localhost:8000/admin (env login, not JWT) |
 | `db` (Postgres) | 5432 | not a web page — used by the API |
 
 The frontend is React + TypeScript (Vite) with **Tailwind CSS** and **shadcn/ui**. On the home page, API health should show **OK** (the browser calls `http://localhost:8000`, not Compose hostnames `api` or `db`).
@@ -81,6 +82,12 @@ docker compose exec api python -m app.db.init_db
 
 This inserts four unit types (`duration_min`, `distance_km`, `reps`, `weight_kg`), cardio and strength exercises (plus `other`), and the activity↔unit links (Running → duration + distance; Bench press → reps + weight per set).
 
+## SQLAdmin (`/admin`)
+
+Browse Postgres in the browser at http://localhost:8000/admin. This login is **not** the later JWT app-user login.
+
+Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, and `SQLADMIN_SECRET_KEY` on shared machines. After seed you should see unit types, exercise activity types, and activity↔unit links (including Running’s duration + distance and a strength exercise’s `per_set` flags).
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell
@@ -98,6 +105,7 @@ Root `.env` (from `.env.example`):
 | `DATABASE_URL` | Local Uvicorn (`localhost`). Compose overrides host to `db` |
 | `API_HOST`, `API_PORT` | Documented bind; container CMD uses `0.0.0.0:8000` |
 | `CORS_ORIGINS` | Allowlist for Vite (`http://localhost:5173`) |
+| `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | `/admin` login (default `admin`/`admin`; change on shared machines) |
 
 Frontend (host Vite only): `VITE_API_BASE_URL=http://localhost:8000` in `frontend/.env`.
 
@@ -140,7 +148,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 
 ## Coming next (not Sprint 1)
 
-Sprint 2 continues with SQLAdmin at `/admin` and JWT register/login. Those are **not** required to demo the Sprint 1 shell.
+Sprint 2 continues with JWT register/login. Those are **not** required to demo the Sprint 1 shell.
 
 ## Layout
 

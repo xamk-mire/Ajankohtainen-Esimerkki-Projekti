@@ -9,7 +9,9 @@ Then open http://localhost:8000/docs
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.admin import setup_admin
 from app.api.health import router as health_router
 from app.core.config import get_settings
 
@@ -24,4 +26,6 @@ app.add_middleware(
     allow_methods=["GET", "HEAD", "OPTIONS"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware, secret_key=settings.sqladmin_secret_key)
 app.include_router(health_router)
+setup_admin(app)

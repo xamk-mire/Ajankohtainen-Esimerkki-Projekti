@@ -4,3 +4,5 @@ pydantic-settings==2.15.0
 sqlalchemy==2.0.52
 psycopg[binary]==3.3.5
 alembic==1.19.1
+sqladmin==0.30.0
+itsdangerous==2.2.0
