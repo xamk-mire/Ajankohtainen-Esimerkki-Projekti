@@ -116,6 +116,8 @@ Sprint 3 uses this catalog. After seed, SQLAdmin should show:
 | Activity types | Exercise-level rows (running, cycling, swimming, hiking, bench_press, curls, face_pull, …) plus `other` |
 | Activity↔unit links | Running → duration + distance; a strength exercise (e.g. bench press) → reps + weight with `per_set` |
 
+When you add a new ORM model later, register a `ModelView` in `backend/app/admin.py` in the same change. Keep `password_hash` (and other secrets) out of list, detail, and form columns. SQLAdmin login stays `SQLADMIN_*` from `.env` — a JWT still will not open `/admin`.
+
 ## Auth API
 
 `POST /auth/register` creates an app user and returns **public fields only** (`id`, `email`, `display_name`) with **201**. It does **not** issue a JWT — call login next. Duplicate email → **409**. Password and `password_hash` never appear in the response.

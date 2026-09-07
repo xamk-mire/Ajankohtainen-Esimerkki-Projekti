@@ -1,4 +1,12 @@
-"""SQLAdmin at /admin. Register a ModelView here when you add an ORM model."""
+"""SQLAdmin at ``/admin``. Login is env-based (``SQLADMIN_*``), not JWT.
+
+Checklist when you add an ORM model (Sprint 3 sessions, plans, …):
+
+1. Import the model and add a ``ModelView`` subclass below.
+2. Register it with ``admin.add_view(...)`` in ``setup_admin``.
+3. Keep secrets out of list, detail, form, and export columns
+   (``password_hash``, future tokens, and similar).
+"""
 
 import secrets
 
@@ -38,6 +46,7 @@ class AdminAuth(AuthenticationBackend):
 
 class UserAdmin(ModelView, model=User):
     column_list = [User.id, User.email, User.display_name, User.created_at]
+    column_exclude_list = [User.password_hash]
     column_details_exclude_list = [User.password_hash]
     form_excluded_columns = [User.password_hash]
     column_searchable_list = [User.email, User.display_name]
