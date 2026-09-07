@@ -128,6 +128,14 @@ Register **password rules** (422 if they fail): at least **8** characters, at mo
 
 The UI stores **only** the JWT in `localStorage` (`access_token`) after login. The shared API client sends `Authorization: Bearer <token>` whenever that key is set. `/` is behind a protected layout; `/login` and `/register` stay public.
 
+Auth smoke test (no UI, SQLite via `get_db` override) from `backend/`:
+
+```powershell
+pytest
+```
+
+That covers register → login → `GET /auth/me`, and asserts **401** without a token. After rebuilding `api`, `docker compose exec api pytest` works the same.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell

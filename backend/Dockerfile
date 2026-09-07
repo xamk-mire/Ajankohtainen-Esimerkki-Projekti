@@ -20,6 +20,8 @@ COPY --from=builder /opt/venv /opt/venv
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY app ./app
+COPY tests ./tests
+COPY pytest.ini ./
 
 EXPOSE 8000
 

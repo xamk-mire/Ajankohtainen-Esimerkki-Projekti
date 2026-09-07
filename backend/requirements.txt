@@ -9,3 +9,5 @@ itsdangerous==2.2.0
 bcrypt==5.0.0
 PyJWT==2.13.0
 email-validator==2.3.0
+httpx==0.28.1
+pytest==8.3.5
