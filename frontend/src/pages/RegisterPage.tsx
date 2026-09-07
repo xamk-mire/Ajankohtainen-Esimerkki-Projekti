@@ -30,6 +30,8 @@ export default function RegisterPage() {
     }
     if (!password) {
       nextFieldErrors.password = 'Password is required'
+    } else if (password.length < 8) {
+      nextFieldErrors.password = 'Password must be at least 8 characters'
     }
     if (!displayName.trim()) {
       nextFieldErrors.display_name = 'Display name is required'
@@ -71,7 +73,8 @@ export default function RegisterPage() {
           <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>
             After you register you will be sent to Login. The API does not issue
-            a token on register.
+            a token on register. Password: at least 8 characters (demo:
+            demo-pass-1).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -123,6 +126,8 @@ export default function RegisterPage() {
                 className={inputClassName}
                 type="password"
                 autoComplete="new-password"
+                minLength={8}
+                maxLength={72}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 disabled={submitting}
@@ -132,7 +137,12 @@ export default function RegisterPage() {
                 <span className="font-normal text-destructive">
                   {fieldErrors.password}
                 </span>
-              ) : null}
+              ) : (
+                <span className="font-normal text-muted-foreground">
+                  At least 8 characters. Avoid common passwords such as
+                  password or 12345678.
+                </span>
+              )}
             </label>
             <Button type="submit" disabled={submitting}>
               {submitting ? 'Creating account…' : 'Register'}

@@ -61,7 +61,7 @@ A JWT from the app **will not** open SQLAdmin. The SQLAdmin password **will not*
 
 1. Copy `.env.example` → `.env` at the repo root. Set a long random `JWT_SECRET`. Keep `CORS_ORIGINS=http://localhost:5173` unless you open the UI on another origin.
 2. Start Compose, then run `alembic upgrade head` and `python -m app.db.init_db` (commands above).
-3. Open http://localhost:5173/register. Fill **display name**, **email**, and **password**. Submit. Register does **not** issue a JWT — you are sent to Login.
+3. Open http://localhost:5173/register. Fill **display name**, **email**, and **password** (at least 8 characters; a demo value is `demo-pass-1`). Submit. Register does **not** issue a JWT — you are sent to Login.
 4. Sign in at http://localhost:5173/login. Home (`/`) should load; the header shows your **display name** (or email).
 5. **Log out** clears the token and returns to Login. Opening `/` while logged out redirects to Login.
 
@@ -119,6 +119,8 @@ Sprint 3 uses this catalog. After seed, SQLAdmin should show:
 ## Auth API
 
 `POST /auth/register` creates an app user and returns **public fields only** (`id`, `email`, `display_name`) with **201**. It does **not** issue a JWT — call login next. Duplicate email → **409**. Password and `password_hash` never appear in the response.
+
+Register **password rules** (422 if they fail): at least **8** characters, at most **72** (bcrypt limit), and not a small common list (`password`, `password1`, `12345678`, `123456789`, `qwerty123`, `letmein1`). Login still accepts existing hashes; it does not re-check complexity. A predictable demo password is `demo-pass-1`.
 
 `POST /auth/login` returns `{ "access_token": "<jwt>", "token_type": "bearer" }`. Unknown email and wrong password both return **401** with the same message (`Incorrect email or password`) so accounts cannot be enumerated.
 
