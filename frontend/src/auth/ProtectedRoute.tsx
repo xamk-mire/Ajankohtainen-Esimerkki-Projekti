@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, Outlet } from 'react-router-dom'
-import { ApiError, getMe } from '@/api/client'
+import { ApiError, getMe, type UserPublic } from '@/api/client'
 import { clearToken, getToken } from '@/auth/token'
+import Header from '@/components/Header'
 
 type GateState = 'loading' | 'ok' | 'unauthenticated' | 'error'
 
 export default function ProtectedRoute() {
   const [state, setState] = useState<GateState>('loading')
+  const [user, setUser] = useState<UserPublic | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     if (!getToken()) {
+      setUser(null)
       setState('unauthenticated')
       return
     }
 
     getMe()
-      .then(() => {
+      .then((profile) => {
         if (!cancelled) {
+          setUser(profile)
           setState('ok')
         }
       })
@@ -26,6 +30,7 @@ export default function ProtectedRoute() {
         if (cancelled) {
           return
         }
+        setUser(null)
         if (error instanceof ApiError && error.status === 401) {
           clearToken()
           setState('unauthenticated')
@@ -39,6 +44,12 @@ export default function ProtectedRoute() {
     }
   }, [])
 
+  function handleLogout() {
+    clearToken()
+    setUser(null)
+    setState('unauthenticated')
+  }
+
   if (state === 'loading') {
     return (
       <main className="flex min-h-svh items-center justify-center bg-background p-6">
@@ -51,7 +62,7 @@ export default function ProtectedRoute() {
     return <Navigate to="/login" replace />
   }
 
-  if (state === 'error') {
+  if (state === 'error' || !user) {
     return (
       <main className="flex min-h-svh items-center justify-center bg-background p-6">
         <p className="text-sm text-muted-foreground">
@@ -65,5 +76,10 @@ export default function ProtectedRoute() {
     )
   }
 
-  return <Outlet />
+  return (
+    <div className="flex min-h-svh flex-col bg-background">
+      <Header user={user} onLogout={handleLogout} />
+      <Outlet />
+    </div>
+  )
 }

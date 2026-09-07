@@ -41,7 +41,7 @@ export default function HomePage() {
     health === 'ok' ? 'default' : health === 'failed' ? 'destructive' : 'outline'
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background p-6">
+    <main className="flex flex-1 items-center justify-center p-6">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Exercise Progress Tracker</CardTitle>
@@ -60,9 +60,6 @@ export default function HomePage() {
           <p className="flex items-center gap-2 text-sm">
             API health:{' '}
             <Badge variant={healthVariant}>{healthLabel}</Badge>
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Signed in. Later sprints add sessions, plans, and progress here.
           </p>
         </CardContent>
       </Card>

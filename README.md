@@ -100,7 +100,7 @@ The UI register form is http://localhost:5173/register. On success it **navigate
 
 The UI login form is http://localhost:5173/login. On success it stores **only** the JWT in `localStorage` (`access_token`) and navigates home. The shared API client sends `Authorization: Bearer <token>` whenever that key is set. Wrong email or password shows **Incorrect email or password**.
 
-`/` is behind a protected layout: missing or invalid JWT (including `GET /auth/me` **401**) clears the token and redirects to `/login`. `/login` and `/register` stay public so they do not loop.
+`/` is behind a protected layout: missing or invalid JWT (including `GET /auth/me` **401**) clears the token and redirects to `/login`. `/login` and `/register` stay public so they do not loop. The header shows **display name** (or email) from `/auth/me`. **Log out** removes the JWT from `localStorage`, drops in-memory user state, and returns to login.
 
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
