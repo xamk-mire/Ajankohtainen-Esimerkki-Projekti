@@ -25,7 +25,7 @@ services:
     environment:
       API_HOST: ${API_HOST}
       API_PORT: ${API_PORT}
-      CORS_ORIGINS: ${CORS_ORIGINS}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       SQLADMIN_USERNAME: ${SQLADMIN_USERNAME:-admin}
       SQLADMIN_PASSWORD: ${SQLADMIN_PASSWORD:-admin}
       SQLADMIN_SECRET_KEY: ${SQLADMIN_SECRET_KEY:-change-me-sqladmin-secret}

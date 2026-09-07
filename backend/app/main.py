@@ -24,8 +24,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=False,
-    allow_methods=["GET", "HEAD", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 app.add_middleware(SessionMiddleware, secret_key=settings.sqladmin_secret_key)
 app.include_router(health_router)

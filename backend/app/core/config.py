@@ -35,7 +35,11 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [part.strip() for part in self.cors_origins.split(",") if part.strip()]
+        return [
+            part.strip()
+            for part in self.cors_origins.split(",")
+            if part.strip() and part.strip() != "*"
+        ]
 
 
 @lru_cache

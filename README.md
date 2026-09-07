@@ -112,7 +112,7 @@ Root `.env` (from `.env.example`):
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Compose `db` |
 | `DATABASE_URL` | Local Uvicorn (`localhost`). Compose overrides host to `db` |
 | `API_HOST`, `API_PORT` | Documented bind; container CMD uses `0.0.0.0:8000` |
-| `CORS_ORIGINS` | Allowlist for Vite (`http://localhost:5173`) |
+| `CORS_ORIGINS` | SPA allowlist (exact origins, comma-separated). Default `http://localhost:5173` — not `*`, not `127.0.0.1`, not Compose host `web`. Allows `GET`/`POST`/`OPTIONS` and `Authorization` / `Content-Type`. JWT uses Bearer headers, so `allow_credentials` is off. |
 | `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | `/admin` login (default `admin`/`admin`; change on shared machines) |
 | `JWT_SECRET`, `ACCESS_TOKEN_EXPIRE_MINUTES` | App-user JWT signing and expiry (not SQLAdmin). Use a long random `JWT_SECRET` in `.env` |
 
@@ -149,7 +149,8 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | Forgotten `.env` | `Copy-Item .env.example .env` at the **repo root**, then `docker compose up --build` |
 | Port 8000, 5173, or 5432 already in use | Stop the other process, or `docker compose down` and start again |
 | API exits while Postgres is still starting | Compose waits for `pg_isready`; give `db` a few seconds, then `docker compose ps` / `docker compose logs db` |
-| Home page health is **failed** | Confirm http://localhost:8000/health in the browser; CORS allowlist is `http://localhost:5173` (open that origin, not a random port) |
+| Home page health is **failed** | Confirm http://localhost:8000/health in the browser; CORS allowlist is `http://localhost:5173` (open that origin, not `127.0.0.1` or a random port) |
+| Browser `fetch` to the API fails with a CORS / preflight error | Confirm the page origin matches `CORS_ORIGINS` exactly, rebuild `api` after CORS changes, and check DevTools → Network for a failed `OPTIONS` request |
 | UI does not update on OneDrive | Vite in Compose uses polling; if it is still stuck, restart `web`: `docker compose restart web` |
 | API cannot reach Postgres from a container | Do not use `localhost` as the DB host **inside** `api` — Compose sets host `db` |
 | `web` fails with `Cannot find package '@tailwindcss/vite'` | The `web_node_modules` volume is stale. Stop Compose, then `docker compose up --build`. The `web` container now runs `npm install` on start. |
