@@ -50,7 +50,7 @@ export default function RegisterPage() {
         password,
         display_name: displayName.trim(),
       })
-      // Register returns a public user, not a JWT — go to Login (S2-15).
+      // Register returns a public user, not a JWT — go to Login.
       navigate('/login?registered=1')
     } catch (error) {
       if (error instanceof ApiError) {

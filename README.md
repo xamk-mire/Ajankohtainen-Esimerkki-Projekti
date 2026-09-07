@@ -98,6 +98,8 @@ Default local credentials (from `.env.example`): `admin` / `admin`. Change `SQLA
 
 The UI register form is http://localhost:5173/register. On success it **navigates to `/login`** (no auto-login — register does not return a JWT). Duplicate email and validation errors are shown on the form.
 
+The UI login form is http://localhost:5173/login. On success it stores **only** the JWT in `localStorage` (`access_token`) and navigates home. The shared API client sends `Authorization: Bearer <token>` whenever that key is set. Wrong email or password shows **Incorrect email or password**.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell
