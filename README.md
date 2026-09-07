@@ -24,10 +24,11 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Wait until `db` is healthy and `api` / `web` are running. Apply the schema, then open the URLs below.
+Wait until `db` is healthy and `api` / `web` are running. Apply the schema and catalog seed, then open the URLs below.
 
 ```powershell
 docker compose exec api alembic upgrade head
+docker compose exec api python -m app.db.init_db
 ```
 
 Stop (keeps the Postgres volume):
@@ -68,12 +69,23 @@ Schema changes live in `backend/alembic/versions/` and use the same `DATABASE_UR
 docker compose exec api alembic upgrade head
 ```
 
-That creates `users`, `activity_types`, `unit_types`, and `activity_type_unit_types`. Catalog seed data is a later Sprint 2 ticket.
+That creates `users`, `activity_types`, `unit_types`, and `activity_type_unit_types`.
+
+### Catalog seed
+
+After migrations, load system units, exercise types, and their unit links (idempotent — safe to run twice):
+
+```powershell
+docker compose exec api python -m app.db.init_db
+```
+
+This inserts four unit types (`duration_min`, `distance_km`, `reps`, `weight_kg`), cardio and strength exercises (plus `other`), and the activity↔unit links (Running → duration + distance; Bench press → reps + weight per set).
 
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell
 alembic upgrade head
+python -m app.db.init_db
 ```
 
 ## Configuration (Sprint 1)
@@ -98,6 +110,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 alembic upgrade head
+python -m app.db.init_db
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -127,7 +140,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 
 ## Coming next (not Sprint 1)
 
-Sprint 2 continues with catalog seed data, SQLAdmin at `/admin`, and JWT register/login. Those are **not** required to demo the Sprint 1 shell.
+Sprint 2 continues with SQLAdmin at `/admin` and JWT register/login. Those are **not** required to demo the Sprint 1 shell.
 
 ## Layout
 

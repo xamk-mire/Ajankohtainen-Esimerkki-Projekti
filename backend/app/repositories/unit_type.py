@@ -10,6 +10,29 @@ def get_unit_type_by_slug(db: Session, slug: str) -> UnitType | None:
     return db.scalars(select(UnitType).where(UnitType.slug == slug)).first()
 
 
+def get_or_create_unit_type(
+    db: Session,
+    *,
+    slug: str,
+    name: str,
+    unit_label: str | None = None,
+    is_system: bool = True,
+) -> UnitType:
+    existing = get_unit_type_by_slug(db, slug)
+    if existing is not None:
+        return existing
+
+    unit = UnitType(
+        slug=slug,
+        name=name,
+        unit_label=unit_label,
+        is_system=is_system,
+    )
+    db.add(unit)
+    db.flush()
+    return unit
+
+
 def create_activity_unit_link_if_missing(
     db: Session,
     activity_type: ActivityType,
