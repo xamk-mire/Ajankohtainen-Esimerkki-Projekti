@@ -13,7 +13,7 @@ class ActivityType(Base):
     System rows use ``is_system=True`` and ``user_id=NULL`` with a unique
     ``slug``. Custom rows use ``is_system=False`` and a owning ``user_id``;
     ``(user_id, slug)`` is unique so two users may reuse the same slug.
-    Measurement kinds live on ``UnitType`` (S2-04), not on this table.
+    Measurement kinds live on ``UnitType``, not on this table.
     """
 
     __tablename__ = "activity_types"
@@ -46,6 +46,10 @@ class ActivityType(Base):
     )
 
     user: Mapped[User | None] = relationship()
+    unit_links: Mapped[list["ActivityTypeUnitType"]] = relationship(
+        back_populates="activity_type",
+        cascade="all, delete-orphan",
+    )
 
     def __str__(self) -> str:
         return f"{self.name} ({self.slug})"
