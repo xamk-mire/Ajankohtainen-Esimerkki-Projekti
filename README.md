@@ -168,6 +168,14 @@ CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 `unit_type_id` must exist, or the write is **422**. `activity_type_id`, when set, must be a system exercise or one of your custom types. `GET /goals?active=true` or `active=false` filters that flag; omit it to list every goal you own. Deactivate with `PATCH` `{ "active": false }`. `DELETE` returns **204**.
 
+## Calendar API
+
+`GET /calendar` requires a Bearer token. It returns this user's sessions that have a `session_at`, ordered by that time. Unscheduled sessions are omitted. There are no generated weekday slots.
+
+`from` and `to` are inclusive bounds on `session_at`. `from` later than `to` is **400**. Optional `plan_id` keeps only sessions on that plan. Another user's sessions never appear. A `plan_id` you do not own returns an empty list.
+
+Each row is `id`, `name`, `session_at`, `status`, and `plan_id`.
+
 ## Ownership
 
 Get, update, and delete for a session, plan, or goal load the row only when `user_id` matches the JWT user. A missing id and another user's id both return **404** with the same detail: `Session not found`, `Plan not found`, or `Goal not found`. These routes do not use **403**, so a caller cannot tell whether the id exists.
