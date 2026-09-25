@@ -142,6 +142,8 @@ That covers register → login → `GET /auth/me`, and asserts **401** without a
 
 `/sessions` requires a Bearer token. List, create, read, patch, and delete apply only to the current user. Another user's session id returns **404** `Session not found` (the same response as a missing id). Optional `plan_id` must be a plan you own; otherwise **404** `Plan not found`.
 
+`GET /sessions` filters are combined with the current user: `from`, `to` (inclusive bounds on `session_at`), `status`, `activity_type_id`, `unscheduled` (`true` = no `session_at`, `false` = dated), and `plan_id`. `from` later than `to` is **400**. A `plan_id` you do not own returns an empty list, not that user's sessions.
+
 Create and patch accept nested `items` and `measurements`. Each measurement needs `planned_value`, `actual_value`, or both; both empty is **422**. `unit_type_id` must be linked to that exercise in `activity_type_unit_types`, or the write is **422**. If that link is `per_set`, `set_index` is required. Omitting `items` on patch leaves existing exercises in place. Sending `items` replaces them. Clone (S3-07) will copy `planned_value` and clear `actual_value`.
 
 CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.

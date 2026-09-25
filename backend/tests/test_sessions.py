@@ -204,3 +204,130 @@ def test_measurement_planned_and_actual_rules(client: TestClient) -> None:
     missing_set = create([{"unit_type_id": reps_id, "planned_value": "8"}])
     assert missing_set.status_code == 422
 
+
+def test_session_list_filters_stay_on_current_user(client: TestClient) -> None:
+    spec = client.get("/openapi.json").json()
+    parameter_names = {
+        parameter["name"]
+        for parameter in spec["paths"]["/sessions"]["get"]["parameters"]
+    }
+    assert {
+        "from",
+        "to",
+        "status",
+        "activity_type_id",
+        "unscheduled",
+        "plan_id",
+    } <= parameter_names
+
+    owner_headers, owner_id = _auth_header(client, f"s306-a-{uuid.uuid4().hex[:8]}@example.com")
+    other_headers, other_id = _auth_header(client, f"s306-b-{uuid.uuid4().hex[:8]}@example.com")
+
+    db = client.app.state.testing_sessionmaker()
+    activity = ActivityType(name="Run", slug=f"run-{uuid.uuid4().hex[:6]}", is_system=True)
+    unit = UnitType(name="Minutes", slug=f"min-{uuid.uuid4().hex[:6]}", is_system=True)
+    own_plan = WorkoutPlan(user_id=uuid.UUID(owner_id), name="Owner plan")
+    foreign_plan = WorkoutPlan(user_id=uuid.UUID(other_id), name="Other plan")
+    db.add_all([activity, unit, own_plan, foreign_plan])
+    db.flush()
+    db.add(
+        ActivityTypeUnitType(
+            activity_type_id=activity.id,
+            unit_type_id=unit.id,
+            sort_order=0,
+            per_set=False,
+        )
+    )
+    db.commit()
+    activity_id = str(activity.id)
+    unit_id = str(unit.id)
+    own_plan_id = str(own_plan.id)
+    foreign_plan_id = str(foreign_plan.id)
+    db.close()
+
+    dated = client.post(
+        "/sessions",
+        headers=owner_headers,
+        json={
+            "name": "Dated",
+            "status": "planned",
+            "session_at": "2026-09-10T12:00:00Z",
+            "plan_id": own_plan_id,
+            "items": [
+                {
+                    "activity_type_id": activity_id,
+                    "measurements": [{"unit_type_id": unit_id, "planned_value": "20"}],
+                }
+            ],
+        },
+    )
+    assert dated.status_code == 201
+    dated_id = dated.json()["id"]
+
+    unscheduled = client.post(
+        "/sessions",
+        headers=owner_headers,
+        json={"name": "Unscheduled", "status": "completed"},
+    )
+    assert unscheduled.status_code == 201
+    unscheduled_id = unscheduled.json()["id"]
+
+    foreign = client.post(
+        "/sessions",
+        headers=other_headers,
+        json={
+            "name": "Other dated",
+            "session_at": "2026-09-10T12:00:00Z",
+            "plan_id": foreign_plan_id,
+        },
+    )
+    assert foreign.status_code == 201
+
+    in_range = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"from": "2026-09-10T00:00:00Z", "to": "2026-09-10T23:59:59Z"},
+    )
+    assert in_range.status_code == 200
+    assert [row["id"] for row in in_range.json()] == [dated_id]
+
+    bad_range = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"from": "2026-09-11T00:00:00Z", "to": "2026-09-01T00:00:00Z"},
+    )
+    assert bad_range.status_code == 400
+
+    by_status = client.get("/sessions", headers=owner_headers, params={"status": "completed"})
+    assert [row["id"] for row in by_status.json()] == [unscheduled_id]
+
+    by_unscheduled = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"unscheduled": "true"},
+    )
+    assert [row["id"] for row in by_unscheduled.json()] == [unscheduled_id]
+
+    by_activity = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"activity_type_id": activity_id},
+    )
+    assert [row["id"] for row in by_activity.json()] == [dated_id]
+
+    by_own_plan = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"plan_id": own_plan_id},
+    )
+    assert [row["id"] for row in by_own_plan.json()] == [dated_id]
+
+    by_foreign_plan = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"plan_id": foreign_plan_id},
+    )
+    assert by_foreign_plan.status_code == 200
+    assert by_foreign_plan.json() == []
+
+

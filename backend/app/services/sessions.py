@@ -8,6 +8,7 @@ from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
 from app.models.workout_session_measurement import WorkoutSessionMeasurement
 from app.repositories.session import (
+    SessionListFilters,
     get_plan_for_user,
     get_session_for_user,
     list_sessions_for_user,
@@ -24,6 +25,10 @@ class PlanNotFoundError(Exception):
     """Raised when plan_id is missing or belongs to another user."""
 
 
+class InvalidSessionRangeError(Exception):
+    """Raised when a list filter has from later than to."""
+
+
 class InvalidSessionReferenceError(Exception):
     """Raised when an activity or unit id does not exist."""
 
@@ -32,8 +37,19 @@ class InvalidSessionReferenceError(Exception):
         super().__init__(detail)
 
 
-def list_sessions(db: Session, user: User) -> list[WorkoutSession]:
-    return list_sessions_for_user(db, user.id)
+def list_sessions(
+    db: Session,
+    user: User,
+    filters: SessionListFilters | None = None,
+) -> list[WorkoutSession]:
+    filters = filters or SessionListFilters()
+    if (
+        filters.starts_at is not None
+        and filters.ends_at is not None
+        and filters.starts_at > filters.ends_at
+    ):
+        raise InvalidSessionRangeError()
+    return list_sessions_for_user(db, user.id, filters)
 
 
 def get_session(db: Session, user: User, session_id: uuid.UUID) -> WorkoutSession:

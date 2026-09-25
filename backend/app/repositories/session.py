@@ -1,4 +1,6 @@
 import uuid
+from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -12,13 +14,46 @@ _session_load = selectinload(WorkoutSession.items).selectinload(
 )
 
 
-def list_sessions_for_user(db: Session, user_id: uuid.UUID) -> list[WorkoutSession]:
+@dataclass(frozen=True)
+class SessionListFilters:
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    status: str | None = None
+    activity_type_id: uuid.UUID | None = None
+    unscheduled: bool | None = None
+    plan_id: uuid.UUID | None = None
+
+
+def list_sessions_for_user(
+    db: Session,
+    user_id: uuid.UUID,
+    filters: SessionListFilters | None = None,
+) -> list[WorkoutSession]:
+    filters = filters or SessionListFilters()
     statement = (
         select(WorkoutSession)
         .where(WorkoutSession.user_id == user_id)
         .options(_session_load)
         .order_by(WorkoutSession.created_at.desc())
     )
+    if filters.starts_at is not None:
+        statement = statement.where(WorkoutSession.session_at >= filters.starts_at)
+    if filters.ends_at is not None:
+        statement = statement.where(WorkoutSession.session_at <= filters.ends_at)
+    if filters.status is not None:
+        statement = statement.where(WorkoutSession.status == filters.status)
+    if filters.activity_type_id is not None:
+        statement = statement.where(
+            WorkoutSession.items.any(
+                WorkoutSessionItem.activity_type_id == filters.activity_type_id
+            )
+        )
+    if filters.unscheduled is True:
+        statement = statement.where(WorkoutSession.session_at.is_(None))
+    elif filters.unscheduled is False:
+        statement = statement.where(WorkoutSession.session_at.is_not(None))
+    if filters.plan_id is not None:
+        statement = statement.where(WorkoutSession.plan_id == filters.plan_id)
     return list(db.scalars(statement).unique().all())
 
 
