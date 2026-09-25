@@ -1,9 +1,24 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.activity_type import ActivityType
 from app.models.activity_type_unit_type import ActivityTypeUnitType
 from app.models.unit_type import UnitType
+
+
+def get_activity_unit_link(
+    db: Session,
+    activity_type_id: uuid.UUID,
+    unit_type_id: uuid.UUID,
+) -> ActivityTypeUnitType | None:
+    return db.scalars(
+        select(ActivityTypeUnitType).where(
+            ActivityTypeUnitType.activity_type_id == activity_type_id,
+            ActivityTypeUnitType.unit_type_id == unit_type_id,
+        )
+    ).first()
 
 
 def get_unit_type_by_slug(db: Session, slug: str) -> UnitType | None:

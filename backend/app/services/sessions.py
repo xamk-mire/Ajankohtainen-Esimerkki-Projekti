@@ -3,7 +3,6 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.models.activity_type import ActivityType
-from app.models.unit_type import UnitType
 from app.models.user import User
 from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
@@ -13,6 +12,7 @@ from app.repositories.session import (
     get_session_for_user,
     list_sessions_for_user,
 )
+from app.repositories.unit_type import get_activity_unit_link
 from app.schemas.session import SessionCreate, SessionItemWrite, SessionUpdate
 
 
@@ -113,14 +113,26 @@ def _require_owned_plan(
 
 
 def _build_item(db: Session, data: SessionItemWrite) -> WorkoutSessionItem:
-    # Link, per-set, and empty-value rules are S3-05. This only checks that
-    # the referenced catalog rows exist so the write does not hit a raw FK error.
     if db.get(ActivityType, data.activity_type_id) is None:
         raise InvalidSessionReferenceError("Unknown activity type")
     measurements = []
     for measurement in data.measurements:
-        if db.get(UnitType, measurement.unit_type_id) is None:
-            raise InvalidSessionReferenceError("Unknown unit type")
+        if measurement.planned_value is None and measurement.actual_value is None:
+            raise InvalidSessionReferenceError(
+                "Measurement needs a planned value, an actual value, or both"
+            )
+        link = get_activity_unit_link(
+            db,
+            data.activity_type_id,
+            measurement.unit_type_id,
+        )
+        if link is None:
+            raise InvalidSessionReferenceError("Unit is not allowed for this activity")
+        if link.per_set and measurement.set_index is None:
+            raise InvalidSessionReferenceError(
+                "set_index is required for per-set units"
+            )
+        # Clone (S3-07) copies planned_value and clears actual_value.
         measurements.append(
             WorkoutSessionMeasurement(
                 unit_type_id=measurement.unit_type_id,
