@@ -98,7 +98,7 @@ Schema changes live in `backend/alembic/versions/` and use the same `DATABASE_UR
 docker compose exec api alembic upgrade head
 ```
 
-`s205_initial` creates `users`, `activity_types`, `unit_types`, and `activity_type_unit_types`. `s301_sessions` adds `workout_sessions`, `workout_session_items`, and `workout_session_measurements` (`planned_value` and `actual_value`, both nullable). `plan_id` is added in the plans migration (S3-03), after `workout_plans` exists. There is no `workout_plan_sessions` table and no session-template flag.
+`s205_initial` creates `users`, `activity_types`, `unit_types`, and `activity_type_unit_types`. `s301_sessions` adds `workout_sessions`, `workout_session_items`, and `workout_session_measurements` (`planned_value` and `actual_value`, both nullable). `plan_id` is added in the plans migration (S3-03), after `workout_plans` exists. There is no `workout_plan_sessions` table and no session-template flag. `s302_goals` adds `goals`: a week or month `target_value` for a `unit_type_id` (optional `activity_type_id`). That is a period target, not `planned_value` on a session.
 
 ### Catalog seed
 
