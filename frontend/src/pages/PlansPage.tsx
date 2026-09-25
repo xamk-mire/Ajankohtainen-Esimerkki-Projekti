@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiError, createPlan, listPlans, type PlanWrite } from '@/api/client'
+import { createPlan, listPlans, type PlanWrite } from '@/api/client'
+import { failureMessage } from '@/api/messages'
 import { queryKeys } from '@/api/queryKeys'
+import { EmptyState, ErrorBanner } from '@/components/StatusMessage'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -80,12 +82,9 @@ export default function PlansPage() {
   }
 
   const plans = plansQuery.data ?? []
-  const createError =
-    create.error instanceof ApiError
-      ? create.error.message
-      : create.isError
-        ? 'Could not create the plan.'
-        : null
+  const createError = create.isError
+    ? failureMessage(create.error, 'Could not create the plan.', 'You cannot change this plan.')
+    : null
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -132,9 +131,7 @@ export default function PlansPage() {
               />
             </label>
             {banner || createError ? (
-              <p className="text-sm text-destructive sm:col-span-2" role="alert">
-                {banner || createError}
-              </p>
+              <ErrorBanner className="sm:col-span-2">{banner || createError}</ErrorBanner>
             ) : null}
             <Button type="submit" disabled={create.isPending}>
               {create.isPending ? 'Creating…' : 'Create plan'}
@@ -145,12 +142,12 @@ export default function PlansPage() {
 
       {plansQuery.isPending ? <p className="text-sm text-muted-foreground">Loading plans…</p> : null}
       {plansQuery.isError ? (
-        <p className="text-sm text-destructive" role="alert">
-          Could not load plans.
-        </p>
+        <ErrorBanner>
+          {failureMessage(plansQuery.error, 'Could not load plans.', 'You cannot view these plans.')}
+        </ErrorBanner>
       ) : null}
       {plansQuery.isSuccess && plans.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No plans yet.</p>
+        <EmptyState>No plans yet. Use the form above to create one.</EmptyState>
       ) : null}
 
       <ul className="flex flex-col gap-3">

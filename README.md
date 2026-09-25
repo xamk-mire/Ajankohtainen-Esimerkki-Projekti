@@ -245,11 +245,11 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 
 ## Dashboard
 
-`/` is the protected dashboard. It loads `GET /sessions?unscheduled=false` for the signed-in user and shows up to eight dated sessions, latest date first. Each card links to `/sessions/:id`. When there are none, the page says so and links to **New session**. Unscheduled sessions are left off this list.
+`/` is the protected dashboard. It loads `GET /sessions?unscheduled=false` for the signed-in user and shows up to eight dated sessions, latest date first. Each card links to `/sessions/:id`. When there are none, the page says **Create your first session**. Unscheduled sessions are left off this list. A failed load or a forbidden response shows an error banner.
 
 ## Sessions list
 
-`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The API omits other users' rows. **New session** opens `/sessions/new`. **Edit** opens `/sessions/:id`.
+`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The API omits other users' rows. **New session** opens `/sessions/new`. **Edit** opens `/sessions/:id`. With no sessions and no filters, the list says **Create your first session**. A failed load, a failed save, or a forbidden response shows an error banner.
 
 The designer saves metadata plus ordered exercises. The activity selector lists system exercises and your custom types. Each option and the line under the control summarize that exercise's unit links (`name`, `unit_label`, and `per set` when the link says so). There is no `unit_hint`. The same selector filters the session list. Measurement fields come from that exercise's unit links, including a planned and an actual input. Either value can be left empty; a unit with both empty is omitted. Strength exercises (`per_set`) use numbered sets. Leave **When** empty to save `session_at` as null. **Plan** is optional.
 
@@ -257,13 +257,13 @@ The designer saves metadata plus ordered exercises. The activity selector lists 
 
 ## Plans
 
-`/plans` is behind the same login gate. Create a plan with a name and optional notes, start date, and length in weeks. Those two fields are labels only. Open a plan to edit or delete it. Deleting a plan leaves the sessions in your log.
+`/plans` is behind the same login gate. Create a plan with a name and optional notes, start date, and length in weeks. Those two fields are labels only. Open a plan to edit or delete it. Deleting a plan leaves the sessions in your log. An empty list and failed saves or forbidden responses are shown on the page, not hidden.
 
 Members are your sessions, attached and detached through `plan_id`. Dated sessions are listed earliest first. Unscheduled sessions are in a separate section. The attach list is `GET /sessions` for the current user, so another person's session cannot be chosen. Attaching a session that is already on another plan moves it.
 
 ## Calendar
 
-`/calendar` is behind the same login gate. **Month** and **Week** load `GET /calendar` for the visible range. Only your dated sessions appear. An optional plan filter uses `plan_id`. Statuses are visually distinct. **Clone** on a session picks a date and calls `POST /sessions/{id}/clone`: planned values stay, actuals are cleared, and the plan is not copied. There is no Google Calendar sync.
+`/calendar` is behind the same login gate. **Month** and **Week** load `GET /calendar` for the visible range. Only your dated sessions appear. An optional plan filter uses `plan_id`. Statuses are visually distinct. **Clone** on a session picks a date and calls `POST /sessions/{id}/clone`: planned values stay, actuals are cleared, and the plan is not copied. An empty range says so and links to **Create your first session**. A failed load or a forbidden clone shows an error banner. There is no Google Calendar sync.
 
 ## Troubleshooting
 

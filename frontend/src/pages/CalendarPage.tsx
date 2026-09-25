@@ -1,13 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  ApiError,
-  cloneSession,
-  listCalendar,
-  listPlans,
-  type CalendarSession,
-} from '@/api/client'
+import { ApiError, cloneSession, listCalendar, listPlans, type CalendarSession } from '@/api/client'
+import { failureMessage } from '@/api/messages'
 import { queryKeys } from '@/api/queryKeys'
 import {
   dayKey,
@@ -20,6 +15,7 @@ import {
   type CalendarView,
 } from '@/calendar/range'
 import { Button } from '@/components/ui/button'
+import { EmptyState, ErrorBanner } from '@/components/StatusMessage'
 import { statusLabel } from '@/sessions/display'
 
 const inputClassName =
@@ -41,13 +37,7 @@ function cloneMessage(error: unknown): string {
   if (error instanceof ApiError && error.status === 404) {
     return 'Session not found.'
   }
-  if (error instanceof ApiError && error.status === 403) {
-    return 'You cannot change this session.'
-  }
-  if (error instanceof ApiError) {
-    return error.message
-  }
-  return 'Could not clone this session.'
+  return failureMessage(error, 'Could not clone this session.', 'You cannot change this session.')
 }
 
 export default function CalendarPage() {
@@ -168,10 +158,24 @@ export default function CalendarPage() {
       </div>
 
       {calendarQuery.isPending ? <p className="text-sm text-muted-foreground">Loading calendar…</p> : null}
+      {plansQuery.isError ? (
+        <ErrorBanner>
+          {failureMessage(plansQuery.error, 'Could not load plans.', 'You cannot view these plans.')}
+        </ErrorBanner>
+      ) : null}
       {calendarQuery.isError ? (
-        <p className="text-sm text-destructive" role="alert">
-          Could not load the calendar.
-        </p>
+        <ErrorBanner>
+          {failureMessage(
+            calendarQuery.error,
+            'Could not load the calendar.',
+            'You cannot view this calendar.',
+          )}
+        </ErrorBanner>
+      ) : null}
+      {calendarQuery.isSuccess && (calendarQuery.data ?? []).length === 0 ? (
+        <EmptyState actionTo="/sessions/new" actionLabel="Create your first session">
+          {planId ? 'No sessions for this plan in this range.' : 'No dated sessions in this range.'}
+        </EmptyState>
       ) : null}
 
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
@@ -234,9 +238,7 @@ export default function CalendarPage() {
             </label>
           </div>
           {cloneBanner || clone.isError ? (
-            <p className="mt-3 text-sm text-destructive" role="alert">
-              {cloneBanner || cloneMessage(clone.error)}
-            </p>
+            <ErrorBanner className="mt-3">{cloneBanner || cloneMessage(clone.error)}</ErrorBanner>
           ) : null}
           <div className="mt-3 flex gap-2">
             <Button type="button" disabled={clone.isPending} onClick={submitClone}>

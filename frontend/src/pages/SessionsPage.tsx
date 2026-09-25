@@ -1,13 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import {
-  ApiError,
-  listActivityTypes,
-  listPlans,
-  listSessions,
-} from '@/api/client'
+import { listActivityTypes, listPlans, listSessions } from '@/api/client'
+import { failureMessage } from '@/api/messages'
 import { queryKeys, type SessionListFilters } from '@/api/queryKeys'
+import { EmptyState, ErrorBanner } from '@/components/StatusMessage'
 import { Badge } from '@/components/ui/badge'
 import ActivityTypeSelect from '@/components/ActivityTypeSelect'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -112,12 +109,9 @@ export default function SessionsPage() {
 
   const sessions = sessionsQuery.data ?? []
   const filtersActive = Object.values(applied).some((value) => value !== null)
-  const listError =
-    sessionsQuery.error instanceof ApiError
-      ? sessionsQuery.error.message
-      : sessionsQuery.isError
-        ? 'Could not load sessions.'
-        : null
+  const listError = sessionsQuery.isError
+    ? failureMessage(sessionsQuery.error, 'Could not load sessions.', 'You cannot view these sessions.')
+    : null
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -212,11 +206,7 @@ export default function SessionsPage() {
                 emptyLabel="Any"
               />
             </label>
-            {rangeError ? (
-              <p className="text-sm text-destructive sm:col-span-2" role="alert">
-                {rangeError}
-              </p>
-            ) : null}
+            {rangeError ? <ErrorBanner className="sm:col-span-2">{rangeError}</ErrorBanner> : null}
             <div className="flex gap-2 sm:col-span-2">
               <Button type="submit">Apply</Button>
               <Button type="button" variant="outline" onClick={handleClear}>
@@ -230,15 +220,29 @@ export default function SessionsPage() {
       {sessionsQuery.isPending ? (
         <p className="text-sm text-muted-foreground">Loading sessions…</p>
       ) : null}
-      {listError ? (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-          {listError}
-        </p>
+      {plansQuery.isError ? (
+        <ErrorBanner>
+          {failureMessage(plansQuery.error, 'Could not load plans.', 'You cannot view these plans.')}
+        </ErrorBanner>
       ) : null}
+      {activitiesQuery.isError ? (
+        <ErrorBanner>
+          {failureMessage(
+            activitiesQuery.error,
+            'Could not load exercises.',
+            'You cannot view these exercises.',
+          )}
+        </ErrorBanner>
+      ) : null}
+      {listError ? <ErrorBanner>{listError}</ErrorBanner> : null}
       {sessionsQuery.isSuccess && sessions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {filtersActive ? 'No sessions match these filters.' : 'No sessions yet.'}
-        </p>
+        filtersActive ? (
+          <EmptyState>No sessions match these filters.</EmptyState>
+        ) : (
+          <EmptyState actionTo="/sessions/new" actionLabel="New session">
+            Create your first session.
+          </EmptyState>
+        )
       ) : null}
 
       <ul className="flex flex-col gap-3">

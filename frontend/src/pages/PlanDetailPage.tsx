@@ -13,6 +13,7 @@ import {
   type PlanWrite,
 } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
+import { EmptyState, ErrorBanner } from '@/components/StatusMessage'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -198,9 +199,9 @@ export default function PlanDetailPage() {
       {planQuery.isPending ? <p className="text-sm text-muted-foreground">Loading plan…</p> : null}
       {missing ? <p className="text-sm text-muted-foreground">Plan not found.</p> : null}
       {planQuery.isError && !missing ? (
-        <p className="text-sm text-destructive" role="alert">
+        <ErrorBanner>
           {planAccessMessage(planQuery.error) ?? 'Could not load this plan.'}
-        </p>
+        </ErrorBanner>
       ) : null}
 
       {plan ? (
@@ -243,9 +244,7 @@ export default function PlanDetailPage() {
                   />
                 </label>
                 {banner || saveError ? (
-                  <p className="text-sm text-destructive sm:col-span-2" role="alert">
-                    {banner || saveError}
-                  </p>
+                  <ErrorBanner className="sm:col-span-2">{banner || saveError}</ErrorBanner>
                 ) : null}
                 {save.isSuccess ? <p className="text-sm text-muted-foreground sm:col-span-2">Saved.</p> : null}
                 <Button type="submit" disabled={save.isPending}>
@@ -265,7 +264,7 @@ export default function PlanDetailPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {members.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No sessions on this plan yet.</p>
+                <EmptyState>No sessions on this plan yet.</EmptyState>
               ) : null}
               <MemberList
                 title="Dated"
@@ -280,9 +279,9 @@ export default function PlanDetailPage() {
                 detachingId={detach.isPending ? detach.variables : null}
               />
               {detach.isError ? (
-                <p className="text-sm text-destructive" role="alert">
+                <ErrorBanner>
                   {planAccessMessage(detach.error) ?? 'Could not detach that session.'}
-                </p>
+                </ErrorBanner>
               ) : null}
               <div className="flex flex-wrap items-end gap-2">
                 <label className="flex min-w-48 flex-1 flex-col gap-1.5 text-sm font-medium">
@@ -311,11 +310,10 @@ export default function PlanDetailPage() {
                   {attach.isPending ? 'Attaching…' : 'Attach'}
                 </Button>
               </div>
-              {attachError ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {attachError}
-                </p>
+              {sessionsQuery.isError ? (
+                <ErrorBanner>Could not load sessions to attach.</ErrorBanner>
               ) : null}
+              {attachError ? <ErrorBanner>{attachError}</ErrorBanner> : null}
             </CardContent>
           </Card>
 
@@ -329,11 +327,7 @@ export default function PlanDetailPage() {
                   <p className="text-sm">
                     Delete this plan? Sessions stay in your log and leave the plan.
                   </p>
-                  {deleteError ? (
-                    <p className="text-sm text-destructive" role="alert">
-                      {deleteError}
-                    </p>
-                  ) : null}
+                  {deleteError ? <ErrorBanner>{deleteError}</ErrorBanner> : null}
                   <div className="flex gap-2">
                     <Button
                       type="button"

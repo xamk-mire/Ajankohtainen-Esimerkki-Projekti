@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  ApiError,
   getApiBaseUrl,
   getHealth,
   listActivityTypes,
@@ -9,6 +8,8 @@ import {
   type Session,
 } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
+import { failureMessage } from '@/api/messages'
+import { EmptyState, ErrorBanner } from '@/components/StatusMessage'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import {
@@ -65,12 +66,9 @@ export default function DashboardPage() {
     (activitiesQuery.data ?? []).map((activity) => [activity.id, activity.name]),
   )
   const recent = recentDated(sessionsQuery.data ?? [])
-  const listError =
-    sessionsQuery.error instanceof ApiError
-      ? sessionsQuery.error.message
-      : sessionsQuery.isError
-        ? 'Could not load sessions.'
-        : null
+  const listError = sessionsQuery.isError
+    ? failureMessage(sessionsQuery.error, 'Could not load sessions.', 'You cannot view these sessions.')
+    : null
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
@@ -98,18 +96,11 @@ export default function DashboardPage() {
       {sessionsQuery.isPending ? (
         <p className="text-sm text-muted-foreground">Loading sessions…</p>
       ) : null}
-      {listError ? (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-          {listError}
-        </p>
-      ) : null}
+      {listError ? <ErrorBanner>{listError}</ErrorBanner> : null}
       {sessionsQuery.isSuccess && recent.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No dated sessions yet.{' '}
-          <Link className="text-primary underline-offset-4 hover:underline" to="/sessions/new">
-            New session
-          </Link>
-        </p>
+        <EmptyState actionTo="/sessions/new" actionLabel="New session">
+          Create your first session.
+        </EmptyState>
       ) : null}
 
       <ul className="flex flex-col gap-3">

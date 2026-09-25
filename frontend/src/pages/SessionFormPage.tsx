@@ -15,8 +15,10 @@ import {
   type SessionWrite,
 } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
+import { failureMessage } from '@/api/messages'
 import MeasurementEditor from '@/components/MeasurementEditor'
 import ActivityTypeSelect from '@/components/ActivityTypeSelect'
+import { ErrorBanner } from '@/components/StatusMessage'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -371,11 +373,7 @@ function SessionDesigner({
         </Button>
       </div>
 
-      {banner || saveError ? (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-          {banner || saveError}
-        </p>
-      ) : null}
+      {banner || saveError ? <ErrorBanner>{banner || saveError}</ErrorBanner> : null}
       {save.isSuccess && !isNew ? (
         <p className="text-sm text-muted-foreground">Saved.</p>
       ) : null}
@@ -416,11 +414,7 @@ function SessionDesigner({
               <p className="text-xs text-muted-foreground sm:col-span-2">
                 Leave the date empty to make the copy unscheduled. The original time is not copied.
               </p>
-              {cloneError ? (
-                <p className="text-sm text-destructive sm:col-span-2" role="alert">
-                  {cloneError}
-                </p>
-              ) : null}
+              {cloneError ? <ErrorBanner className="sm:col-span-2">{cloneError}</ErrorBanner> : null}
               <Button
                 type="button"
                 variant="outline"
@@ -440,11 +434,7 @@ function SessionDesigner({
               {confirmDelete ? (
                 <>
                   <p className="text-sm">Delete this session? This cannot be undone.</p>
-                  {deleteError ? (
-                    <p className="text-sm text-destructive" role="alert">
-                      {deleteError}
-                    </p>
-                  ) : null}
+                  {deleteError ? <ErrorBanner>{deleteError}</ErrorBanner> : null}
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -510,20 +500,25 @@ export default function SessionFormPage() {
         <p className="text-sm text-muted-foreground">Loading session…</p>
       ) : null}
       {activitiesQuery.isError ? (
-        <p className="text-sm text-destructive" role="alert">
-          Could not load exercises.
-        </p>
+        <ErrorBanner>
+          {failureMessage(
+            activitiesQuery.error,
+            'Could not load exercises.',
+            'You cannot view these exercises.',
+          )}
+        </ErrorBanner>
+      ) : null}
+      {plansQuery.isError ? (
+        <ErrorBanner>
+          {failureMessage(plansQuery.error, 'Could not load plans.', 'You cannot view these plans.')}
+        </ErrorBanner>
       ) : null}
       {missing ? <p className="text-sm text-muted-foreground">Session not found.</p> : null}
-      {forbidden ? (
-        <p className="text-sm text-destructive" role="alert">
-          You cannot change this session.
-        </p>
-      ) : null}
+      {forbidden ? <ErrorBanner>You cannot change this session.</ErrorBanner> : null}
       {sessionQuery.isError && !missing && !forbidden ? (
-        <p className="text-sm text-destructive" role="alert">
-          Could not load this session.
-        </p>
+        <ErrorBanner>
+          {failureMessage(sessionQuery.error, 'Could not load this session.', 'You cannot view this session.')}
+        </ErrorBanner>
       ) : null}
       {ready ? (
         <SessionDesigner
