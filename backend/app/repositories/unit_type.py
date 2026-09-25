@@ -21,6 +21,10 @@ def get_activity_unit_link(
     ).first()
 
 
+def get_unit_type_by_id(db: Session, unit_type_id: uuid.UUID) -> UnitType | None:
+    return db.get(UnitType, unit_type_id)
+
+
 def get_unit_types_by_ids(db: Session, unit_type_ids: list[uuid.UUID]) -> list[UnitType]:
     if not unit_type_ids:
         return []

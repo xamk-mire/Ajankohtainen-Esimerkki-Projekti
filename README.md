@@ -162,6 +162,12 @@ CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 `POST /activity-types` creates a custom type owned by the caller (`is_system` false). Body: `name`, optional `slug` (otherwise derived from the name), and at least one `unit_links` entry (`unit_type_id`, optional `sort_order`, `is_required`, `per_set`). An unknown unit or a repeated unit is **422**. A slug you already use is **409**.
 
+## Goals API
+
+`/goals` requires a Bearer token and is limited to the current user. Another user's goal id is **404** `Goal not found`. A goal is a week or month `target_value` for a `unit_type_id`, with an optional `activity_type_id`. It is not `planned_value` on a session.
+
+`unit_type_id` must exist, or the write is **422**. `activity_type_id`, when set, must be a system exercise or one of your custom types. `GET /goals?active=true` or `active=false` filters that flag; omit it to list every goal you own. Deactivate with `PATCH` `{ "active": false }`. `DELETE` returns **204**.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell

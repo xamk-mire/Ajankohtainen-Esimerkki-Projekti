@@ -63,6 +63,23 @@ def list_visible_activity_types(db: Session, user_id: uuid.UUID) -> list[Activit
     return activities
 
 
+def get_visible_activity_type(
+    db: Session,
+    activity_type_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> ActivityType | None:
+    """System catalog row, or a custom type owned by this user."""
+    return db.scalars(
+        select(ActivityType).where(
+            ActivityType.id == activity_type_id,
+            or_(
+                ActivityType.user_id.is_(None),
+                ActivityType.user_id == user_id,
+            ),
+        )
+    ).first()
+
+
 def get_user_activity_by_slug(
     db: Session,
     user_id: uuid.UUID,
