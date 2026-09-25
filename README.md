@@ -136,7 +136,15 @@ Auth smoke test (no UI, SQLite via `get_db` override) from `backend/`:
 pytest
 ```
 
-That covers register → login → `GET /auth/me`, and asserts **401** without a token. After rebuilding `api`, `docker compose exec api pytest` works the same.
+That covers register → login → `GET /auth/me`, and asserts **401** without a token. `tests/test_sessions.py` covers owner-scoped `/sessions` create, list, update, and delete, including nested items. After rebuilding `api`, `docker compose exec api pytest` works the same.
+
+## Sessions API
+
+`/sessions` requires a Bearer token. List, create, read, patch, and delete apply only to the current user. Another user's session id returns **404** `Session not found` (the same response as a missing id). Optional `plan_id` must be a plan you own; otherwise **404** `Plan not found`.
+
+Create and patch accept nested `items` and `measurements` (`planned_value`, `actual_value`, `set_index`). Omitting `items` on patch leaves existing exercises in place. Sending `items` replaces them. Catalog rules (unit must be linked to the exercise, per-set `set_index`, both values empty) are not enforced yet.
+
+CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
@@ -154,7 +162,7 @@ Root `.env` (from `.env.example`). Placeholders only in Git — put real secrets
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Compose `db` |
 | `DATABASE_URL` | Local Uvicorn (`localhost`). Compose overrides host to `db` |
 | `API_HOST`, `API_PORT` | Documented bind; container CMD uses `0.0.0.0:8000` |
-| `CORS_ORIGINS` | SPA allowlist (exact origins, comma-separated). Default `http://localhost:5173` — not `*`, not `127.0.0.1`, not Compose host `web`. Allows `GET`/`POST`/`OPTIONS` and `Authorization` / `Content-Type`. JWT uses Bearer headers, so `allow_credentials` is off. |
+| `CORS_ORIGINS` | SPA allowlist (exact origins, comma-separated). Default `http://localhost:5173` — not `*`, not `127.0.0.1`, not Compose host `web`. Allows `GET`/`POST`/`PATCH`/`DELETE`/`OPTIONS` and `Authorization` / `Content-Type`. JWT uses Bearer headers, so `allow_credentials` is off. |
 | `SQLADMIN_USERNAME`, `SQLADMIN_PASSWORD`, `SQLADMIN_SECRET_KEY` | `/admin` only (default `admin`/`admin`). Change on shared machines. Not app-user login. |
 | `JWT_SECRET`, `ACCESS_TOKEN_EXPIRE_MINUTES` | App-user JWT signing and expiry (not SQLAdmin). Use a long random `JWT_SECRET` in `.env`. |
 

@@ -34,6 +34,7 @@ def client() -> TestClient:
             db.close()
 
     fastapi_app.dependency_overrides[get_db] = override_get_db
+    fastapi_app.state.testing_sessionmaker = TestingSessionLocal
     with TestClient(fastapi_app) as test_client:
         yield test_client
     fastapi_app.dependency_overrides.clear()
