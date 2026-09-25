@@ -182,7 +182,7 @@ Get, update, and delete for a session, plan, or goal load the row only when `use
 
 The same rule covers attaching or detaching a session on a plan, the source session of a clone, and an optional `plan_id` on a session write. Detach also returns `Session not found` when the session is not a member of that plan. List filters stay on the current user. `GET /sessions?plan_id=` for a plan you do not own is **200** with an empty list.
 
-S3-22 will turn this into a two-account demo. Use these status codes and detail strings there.
+Repeat the two-account check from [docs/idor-demo.md](docs/idor-demo.md).
 
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
