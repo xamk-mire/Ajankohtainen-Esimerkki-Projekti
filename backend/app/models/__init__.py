@@ -5,6 +5,7 @@ from app.models.activity_type_unit_type import ActivityTypeUnitType
 from app.models.goal import Goal
 from app.models.unit_type import UnitType
 from app.models.user import User
+from app.models.workout_plan import WorkoutPlan
 from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
 from app.models.workout_session_measurement import WorkoutSessionMeasurement
@@ -15,6 +16,7 @@ __all__ = [
     "Goal",
     "UnitType",
     "User",
+    "WorkoutPlan",
     "WorkoutSession",
     "WorkoutSessionItem",
     "WorkoutSessionMeasurement",

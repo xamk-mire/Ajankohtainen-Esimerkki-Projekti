@@ -23,8 +23,8 @@ SESSION_STATUSES = ("planned", "in_progress", "completed")
 class WorkoutSession(Base):
     """One training outing: metadata plus ordered exercises.
 
-    ``plan_id`` is not on this table yet. S3-03 adds ``workout_plans`` and
-    then a nullable ``plan_id`` (ON DELETE SET NULL) plus ``(plan_id, session_at)``.
+    ``plan_id`` is optional and points at one ``WorkoutPlan``. A session cannot
+    belong to two plans. Deleting the plan sets ``plan_id`` to null.
     There is no template flag and no ``workout_plan_sessions`` table.
     """
 
@@ -41,6 +41,11 @@ class WorkoutSession(Base):
         Index(
             "ix_workout_sessions_user_id_session_at",
             "user_id",
+            "session_at",
+        ),
+        Index(
+            "ix_workout_sessions_plan_id_session_at",
+            "plan_id",
             "session_at",
         ),
     )
@@ -68,6 +73,11 @@ class WorkoutSession(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     intensity: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    plan_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("workout_plans.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     source_session_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("workout_sessions.id", ondelete="SET NULL"),
@@ -88,6 +98,7 @@ class WorkoutSession(Base):
     )
 
     user: Mapped[User] = relationship()
+    plan: Mapped["WorkoutPlan | None"] = relationship(back_populates="sessions")
     items: Mapped[list["WorkoutSessionItem"]] = relationship(
         back_populates="session",
         cascade="all, delete-orphan",
