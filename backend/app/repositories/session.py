@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
+from app.models.workout_session_measurement import WorkoutSessionMeasurement
 
 _session_load = selectinload(WorkoutSession.items).selectinload(
     WorkoutSessionItem.measurements
@@ -78,3 +79,35 @@ def get_session_for_user(
         .options(_session_load)
     )
     return db.scalars(statement).unique().one_or_none()
+
+
+def list_measurement_rows_for_user(
+    db: Session,
+    user_id: uuid.UUID,
+    *,
+    starts_at: datetime | None,
+    ends_at: datetime | None,
+) -> list[tuple]:
+    """This user's measurement values on dated sessions inside the inclusive range."""
+    statement = (
+        select(
+            WorkoutSessionMeasurement.unit_type_id,
+            WorkoutSessionMeasurement.planned_value,
+            WorkoutSessionMeasurement.actual_value,
+            WorkoutSession.session_at,
+        )
+        .join(
+            WorkoutSessionItem,
+            WorkoutSessionMeasurement.session_item_id == WorkoutSessionItem.id,
+        )
+        .join(WorkoutSession, WorkoutSessionItem.session_id == WorkoutSession.id)
+        .where(
+            WorkoutSession.user_id == user_id,
+            WorkoutSession.session_at.is_not(None),
+        )
+    )
+    if starts_at is not None:
+        statement = statement.where(WorkoutSession.session_at >= starts_at)
+    if ends_at is not None:
+        statement = statement.where(WorkoutSession.session_at <= ends_at)
+    return list(db.execute(statement).all())

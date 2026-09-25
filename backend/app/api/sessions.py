@@ -9,12 +9,14 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.repositories.session import SessionListFilters
+from app.schemas.adherence import AdherenceRead
 from app.schemas.session import SessionClone, SessionCreate, SessionListPage, SessionRead, SessionUpdate
 from app.services.sessions import (
     InvalidSessionRangeError,
     InvalidSessionReferenceError,
     PlanNotFoundError,
     SessionNotFoundError,
+    adherence_for_user,
     clone_session,
     create_session,
     delete_session,
@@ -148,6 +150,48 @@ def clone_my_session(
             detail="Plan not found",
         ) from None
     return SessionRead.model_validate(session)
+
+
+@router.get(
+    "/adherence",
+    response_model=list[AdherenceRead],
+    summary="Planned versus actual preview",
+)
+def adherence_preview(
+    session_from: Annotated[
+        datetime | None,
+        Query(
+            alias="from",
+            description="Inclusive lower bound on session_at. Unscheduled sessions are excluded.",
+        ),
+    ] = None,
+    session_to: Annotated[
+        datetime | None,
+        Query(
+            alias="to",
+            description="Inclusive upper bound on session_at. Unscheduled sessions are excluded.",
+        ),
+    ] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Security(get_current_user),
+) -> list[AdherenceRead]:
+    """Sprint 4 preview: this user's planned versus actual totals, one row per unit.
+
+    Measurements missing planned or actual are skipped. Units are not added together.
+    """
+    try:
+        rows = adherence_for_user(
+            db,
+            current_user,
+            starts_at=session_from,
+            ends_at=session_to,
+        )
+    except InvalidSessionRangeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="from must not be after to",
+        ) from None
+    return [AdherenceRead.model_validate(row, from_attributes=True) for row in rows]
 
 
 @router.get("/{session_id}", response_model=SessionRead)

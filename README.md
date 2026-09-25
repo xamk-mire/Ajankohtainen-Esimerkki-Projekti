@@ -153,6 +153,8 @@ Create and patch accept nested `items` and `measurements`. Each measurement need
 
 `POST /sessions/{id}/clone` deep-copies your session into a new one (`201`). Planned values and exercise notes are kept; `actual_value` is cleared; status is `planned`; `source_session_id` points at the source. Optional body fields are `name`, `session_at`, and `plan_id`. If `plan_id` or `session_at` is omitted, the clone does not inherit them. Editing the source later does not change the clone. Another user's session id is **404**.
 
+`GET /sessions/adherence` is a Sprint 4 preview. It totals `planned_value` and `actual_value` for the current user, one row per `unit_type_id`, so different units are not added together. A measurement needs both values. Unscheduled sessions are omitted. `from` later than `to` is **400** `from must not be after to`.
+
 CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 ## Plans API

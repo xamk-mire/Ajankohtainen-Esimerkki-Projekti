@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
@@ -7,9 +9,14 @@ from app.models.user import User
 from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
 from app.models.workout_session_measurement import WorkoutSessionMeasurement
-from app.repositories.session import SessionListFilters, list_sessions_for_user
+from app.repositories.session import (
+    SessionListFilters,
+    list_measurement_rows_for_user,
+    list_sessions_for_user,
+)
 from app.repositories.unit_type import get_activity_unit_link
 from app.schemas.session import SessionClone, SessionCreate, SessionItemWrite, SessionUpdate
+from app.services.adherence import MeasurementSample, UnitAdherence, summarize_adherence
 from app.services.ownership import (
     PlanNotFoundError,
     SessionNotFoundError,
@@ -43,6 +50,40 @@ def list_sessions(
     ):
         raise InvalidSessionRangeError()
     return list_sessions_for_user(db, user.id, filters)
+
+
+def adherence_for_user(
+    db: Session,
+    user: User,
+    *,
+    starts_at: datetime | None,
+    ends_at: datetime | None,
+) -> list[UnitAdherence]:
+    """Load this user's dated measurements and compare planned with actual.
+
+    Another user's rows are not loaded. Sprint 4 can chart ``GET /sessions/adherence``.
+    """
+    if (
+        starts_at is not None
+        and ends_at is not None
+        and starts_at > ends_at
+    ):
+        raise InvalidSessionRangeError()
+    samples = [
+        MeasurementSample(
+            unit_type_id=unit_type_id,
+            planned=None if planned is None else Decimal(str(planned)),
+            actual=None if actual is None else Decimal(str(actual)),
+            session_at=session_at,
+        )
+        for unit_type_id, planned, actual, session_at in list_measurement_rows_for_user(
+            db,
+            user.id,
+            starts_at=starts_at,
+            ends_at=ends_at,
+        )
+    ]
+    return summarize_adherence(samples, starts_at=starts_at, ends_at=ends_at)
 
 
 def get_session(db: Session, user: User, session_id: uuid.UUID) -> WorkoutSession:
