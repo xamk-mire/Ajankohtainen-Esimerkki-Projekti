@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './auth/ProtectedRoute'
 import CalendarPage from './pages/CalendarPage'
-import HomePage from './pages/HomePage'
+import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import PlanDetailPage from './pages/PlanDetailPage'
 import PlansPage from './pages/PlansPage'
@@ -15,7 +15,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<DashboardPage />} />
         <Route path="/sessions" element={<SessionsPage />} />
         <Route path="/sessions/new" element={<SessionFormPage />} />
         <Route path="/sessions/:sessionId" element={<SessionFormPage />} />

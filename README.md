@@ -231,7 +231,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 
 ## TanStack Query
 
-`QueryClientProvider` wraps the app in `frontend/src/main.tsx`. The home page loads `GET /health` with `useQuery`. Later screens should use the helpers in `frontend/src/api/queryKeys.ts` and invalidate the same key after a mutation.
+`QueryClientProvider` wraps the app in `frontend/src/main.tsx`. The dashboard at `/` loads `GET /health` with `useQuery`. Later screens should use the helpers in `frontend/src/api/queryKeys.ts` and invalidate the same key after a mutation.
 
 | Key | Use |
 | --- | --- |
@@ -242,6 +242,10 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | `['calendar', from, to, planId]` | Dated sessions for a range. Use `null` when a bound or plan is omitted |
 | `['activity-types']` | Exercise catalog for selectors |
 | `['sessions', 'detail', id]` | One session |
+
+## Dashboard
+
+`/` is the protected dashboard. It loads `GET /sessions?unscheduled=false` for the signed-in user and shows up to eight dated sessions, latest date first. Each card links to `/sessions/:id`. When there are none, the page says so and links to **New session**. Unscheduled sessions are left off this list.
 
 ## Sessions list
 
