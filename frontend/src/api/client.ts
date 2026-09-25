@@ -115,6 +115,14 @@ export async function apiDelete(path: string): Promise<void> {
   }
 }
 
+async function apiDeleteJson<T>(path: string): Promise<T> {
+  const response = await fetch(apiUrl(path), {
+    method: 'DELETE',
+    headers: requestHeaders(),
+  })
+  return handleResponse<T>(path, response)
+}
+
 export type HealthResponse = {
   status: string
 }
@@ -193,6 +201,33 @@ export type PlanSummary = {
   name: string
 }
 
+export type Plan = PlanSummary & {
+  user_id: string
+  notes: string | null
+  start_date: string | null
+  length_weeks: number | null
+  created_at: string
+  updated_at: string
+}
+
+export type PlanSession = {
+  id: string
+  name: string
+  session_at: string | null
+  status: string
+}
+
+export type PlanDetail = Plan & {
+  sessions: PlanSession[]
+}
+
+export type PlanWrite = {
+  name: string
+  notes: string | null
+  start_date: string | null
+  length_weeks: number | null
+}
+
 export type UnitTypeSummary = {
   id: string
   name: string
@@ -269,8 +304,32 @@ export function getSession(sessionId: string): Promise<Session> {
   return apiGet<Session>(`/sessions/${sessionId}`)
 }
 
-export function listPlans(): Promise<PlanSummary[]> {
-  return apiGet<PlanSummary[]>('/plans')
+export function listPlans(): Promise<Plan[]> {
+  return apiGet<Plan[]>('/plans')
+}
+
+export function getPlan(planId: string): Promise<PlanDetail> {
+  return apiGet<PlanDetail>(`/plans/${planId}`)
+}
+
+export function createPlan(body: PlanWrite): Promise<PlanDetail> {
+  return apiPost<PlanDetail>('/plans', body)
+}
+
+export function updatePlan(planId: string, body: PlanWrite): Promise<PlanDetail> {
+  return apiPatch<PlanDetail>(`/plans/${planId}`, body)
+}
+
+export function deletePlan(planId: string): Promise<void> {
+  return apiDelete(`/plans/${planId}`)
+}
+
+export function attachPlanSession(planId: string, sessionId: string): Promise<PlanDetail> {
+  return apiPost<PlanDetail>(`/plans/${planId}/sessions/${sessionId}`, {})
+}
+
+export function detachPlanSession(planId: string, sessionId: string): Promise<PlanDetail> {
+  return apiDeleteJson<PlanDetail>(`/plans/${planId}/sessions/${sessionId}`)
 }
 
 export function listActivityTypes(): Promise<ActivityTypeSummary[]> {

@@ -251,6 +251,12 @@ The designer saves metadata plus ordered exercises. The activity selector lists 
 
 **Save session** updates the open session. **Delete** asks for confirmation, then removes it. **Clone** asks for a copy name and date, calls `POST /sessions/{id}/clone`, and opens the new session. Planned values stay, actuals are cleared, and the plan is not copied. The copy says it is a snapshot, so editing the original afterward leaves the copy as it was. A missing or forbidden session shows **Session not found** or **You cannot change this session**. Saves, deletes, and clones refresh the session, plan, and calendar caches.
 
+## Plans
+
+`/plans` is behind the same login gate. Create a plan with a name and optional notes, start date, and length in weeks. Those two fields are labels only. Open a plan to edit or delete it. Deleting a plan leaves the sessions in your log.
+
+Members are your sessions, attached and detached through `plan_id`. Dated sessions are listed earliest first. Unscheduled sessions are in a separate section. The attach list is `GET /sessions` for the current user, so another person's session cannot be chosen. Attaching a session that is already on another plan moves it.
+
 ## Troubleshooting
 
 | Symptom | What to try |

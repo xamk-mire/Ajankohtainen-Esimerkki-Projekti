@@ -16,9 +16,12 @@ export default function Header({ user, onLogout }: HeaderProps) {
         <Link className="text-sm font-medium" to="/">
           Exercise Progress Tracker
         </Link>
-        <nav>
+        <nav className="flex items-center gap-4">
           <Link className="text-sm text-muted-foreground hover:text-foreground" to="/sessions">
             Sessions
+          </Link>
+          <Link className="text-sm text-muted-foreground hover:text-foreground" to="/plans">
+            Plans
           </Link>
         </nav>
       </div>

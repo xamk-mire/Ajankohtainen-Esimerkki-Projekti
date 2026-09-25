@@ -52,9 +52,12 @@ export default function HomePage() {
             API health:{' '}
             <Badge variant={healthVariant}>{healthLabel}</Badge>
           </p>
-          <p className="text-sm">
+          <p className="flex gap-4 text-sm">
             <Link className="text-primary underline-offset-4 hover:underline" to="/sessions">
               Sessions
+            </Link>
+            <Link className="text-primary underline-offset-4 hover:underline" to="/plans">
+              Plans
             </Link>
           </p>
         </CardContent>
