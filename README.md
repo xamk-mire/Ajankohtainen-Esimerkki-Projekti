@@ -115,6 +115,11 @@ Sprint 3 uses this catalog. After seed, SQLAdmin should show:
 | Unit types | Four system units: `duration_min`, `distance_km`, `reps`, `weight_kg` |
 | Activity types | Exercise-level rows (running, cycling, swimming, hiking, bench_press, curls, face_pull, …) plus `other` |
 | Activity↔unit links | Running → duration + distance; a strength exercise (e.g. bench press) → reps + weight with `per_set` |
+| Sessions | Name, `user_id`, `session_at`, status, `plan_id` |
+| Session exercises | `session_id`, `activity_type_id`, sort order |
+| Measurements | `session_item_id`, `unit_type_id`, planned and actual values |
+| Plans | Name and `user_id` |
+| Period goals | `user_id`, `unit_type_id`, target, week or month |
 
 When you add a new ORM model later, register a `ModelView` in `backend/app/admin.py` in the same change. Keep `password_hash` (and other secrets) out of list, detail, and form columns. SQLAdmin login stays `SQLADMIN_*` from `.env` — a JWT still will not open `/admin`.
 
