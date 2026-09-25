@@ -43,7 +43,11 @@ def test_cross_user_object_access_is_404(client: TestClient) -> None:
     unit_id = str(unit.id)
     db.close()
 
-    session = client.post("/sessions", headers=owner, json={"name": "Easy run"})
+    session = client.post(
+        "/sessions",
+        headers=owner,
+        json={"name": "Easy run", "session_at": "2026-09-28T15:00:00Z"},
+    )
     plan = client.post("/plans", headers=owner, json={"name": "Pull block"})
     goal = client.post(
         "/goals",
@@ -64,6 +68,15 @@ def test_cross_user_object_access_is_404(client: TestClient) -> None:
     )
     _denied(client.delete(f"/sessions/{session_id}", headers=other), "Session not found")
     _denied(client.post(f"/sessions/{session_id}/clone", headers=other), "Session not found")
+    assert client.get(f"/sessions/{session_id}").status_code == 401
+
+    other_plan = client.post("/plans", headers=other, json={"name": "Other plan"})
+    assert other_plan.status_code == 201
+    other_plan_id = other_plan.json()["id"]
+    _denied(
+        client.post(f"/plans/{other_plan_id}/sessions/{session_id}", headers=other),
+        "Session not found",
+    )
 
     _denied(client.get(f"/plans/{plan_id}", headers=other), "Plan not found")
     _denied(
@@ -96,6 +109,26 @@ def test_cross_user_object_access_is_404(client: TestClient) -> None:
     assert client.get(f"/sessions/{session_id}", headers=owner).status_code == 200
     assert client.get(f"/plans/{plan_id}", headers=owner).status_code == 200
     assert client.get(f"/goals/{goal_id}", headers=owner).status_code == 200
-    assert client.get("/sessions", headers=other).json()["items"] == [other_session.json()]
-    assert client.get("/plans", headers=other).json() == []
-    assert client.get("/goals", headers=other).json() == []
+
+    other_sessions = client.get("/sessions", headers=other).json()["items"]
+    assert [row["id"] for row in other_sessions] == [other_session.json()["id"]]
+    assert session_id not in {row["id"] for row in other_sessions}
+
+    other_plans = client.get("/plans", headers=other).json()
+    assert [row["id"] for row in other_plans] == [other_plan_id]
+    assert plan_id not in {row["id"] for row in other_plans}
+
+    other_goals = client.get("/goals", headers=other).json()
+    assert goal_id not in {row["id"] for row in other_goals}
+
+    other_calendar = client.get("/calendar", headers=other).json()
+    assert session_id not in {row["id"] for row in other_calendar}
+    owner_calendar = client.get("/calendar", headers=owner).json()
+    assert session_id in {row["id"] for row in owner_calendar}
+
+    foreign_sessions = client.get("/sessions", headers=other, params={"plan_id": plan_id})
+    assert foreign_sessions.status_code == 200
+    assert foreign_sessions.json()["items"] == []
+    foreign_calendar = client.get("/calendar", headers=other, params={"plan_id": plan_id})
+    assert foreign_calendar.status_code == 200
+    assert foreign_calendar.json() == []
