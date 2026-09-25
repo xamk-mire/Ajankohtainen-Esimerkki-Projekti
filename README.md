@@ -144,7 +144,9 @@ That covers register → login → `GET /auth/me`, and asserts **401** without a
 
 `GET /sessions` filters are combined with the current user: `from`, `to` (inclusive bounds on `session_at`), `status`, `activity_type_id`, `unscheduled` (`true` = no `session_at`, `false` = dated), and `plan_id`. `from` later than `to` is **400**. A `plan_id` you do not own returns an empty list, not that user's sessions.
 
-Create and patch accept nested `items` and `measurements`. Each measurement needs `planned_value`, `actual_value`, or both; both empty is **422**. `unit_type_id` must be linked to that exercise in `activity_type_unit_types`, or the write is **422**. If that link is `per_set`, `set_index` is required. Omitting `items` on patch leaves existing exercises in place. Sending `items` replaces them. Clone (S3-07) will copy `planned_value` and clear `actual_value`.
+Create and patch accept nested `items` and `measurements`. Each measurement needs `planned_value`, `actual_value`, or both; both empty is **422**. `unit_type_id` must be linked to that exercise in `activity_type_unit_types`, or the write is **422**. If that link is `per_set`, `set_index` is required. Omitting `items` on patch leaves existing exercises in place. Sending `items` replaces them.
+
+`POST /sessions/{id}/clone` deep-copies your session into a new one (`201`). Planned values and exercise notes are kept; `actual_value` is cleared; status is `planned`; `source_session_id` points at the source. Optional body fields are `name`, `session_at`, and `plan_id`. If `plan_id` or `session_at` is omitted, the clone does not inherit them. Editing the source later does not change the clone. Another user's session id is **404**.
 
 CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 

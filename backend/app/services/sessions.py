@@ -14,7 +14,7 @@ from app.repositories.session import (
     list_sessions_for_user,
 )
 from app.repositories.unit_type import get_activity_unit_link
-from app.schemas.session import SessionCreate, SessionItemWrite, SessionUpdate
+from app.schemas.session import SessionClone, SessionCreate, SessionItemWrite, SessionUpdate
 
 
 class SessionNotFoundError(Exception):
@@ -117,6 +117,49 @@ def delete_session(db: Session, user: User, session_id: uuid.UUID) -> None:
     db.commit()
 
 
+def clone_session(
+    db: Session,
+    user: User,
+    session_id: uuid.UUID,
+    data: SessionClone | None = None,
+) -> WorkoutSession:
+    source = get_session(db, user, session_id)
+    data = data or SessionClone()
+    plan_id = data.plan_id if "plan_id" in data.model_fields_set else None
+    _require_owned_plan(db, user.id, plan_id)
+    clone = WorkoutSession(
+        user_id=user.id,
+        name=data.name or source.name,
+        session_at=data.session_at if "session_at" in data.model_fields_set else None,
+        status="planned",
+        notes=source.notes,
+        intensity=source.intensity,
+        plan_id=plan_id,
+        source_session_id=source.id,
+        items=[_copy_item(item) for item in source.items],
+    )
+    db.add(clone)
+    db.commit()
+    return get_session(db, user, clone.id)
+
+
+def _copy_item(item: WorkoutSessionItem) -> WorkoutSessionItem:
+    return WorkoutSessionItem(
+        activity_type_id=item.activity_type_id,
+        sort_order=item.sort_order,
+        notes=item.notes,
+        measurements=[
+            WorkoutSessionMeasurement(
+                unit_type_id=measurement.unit_type_id,
+                planned_value=measurement.planned_value,
+                actual_value=None,
+                set_index=measurement.set_index,
+            )
+            for measurement in item.measurements
+        ],
+    )
+
+
 def _require_owned_plan(
     db: Session,
     user_id: uuid.UUID,
@@ -148,7 +191,7 @@ def _build_item(db: Session, data: SessionItemWrite) -> WorkoutSessionItem:
             raise InvalidSessionReferenceError(
                 "set_index is required for per-set units"
             )
-        # Clone (S3-07) copies planned_value and clears actual_value.
+        # Clone copies planned_value and clears actual_value in clone_session.
         measurements.append(
             WorkoutSessionMeasurement(
                 unit_type_id=measurement.unit_type_id,

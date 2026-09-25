@@ -331,3 +331,100 @@ def test_session_list_filters_stay_on_current_user(client: TestClient) -> None:
     assert by_foreign_plan.json() == []
 
 
+def test_clone_session_is_an_isolated_snapshot(client: TestClient) -> None:
+    owner_headers, owner_id = _auth_header(client, f"s307-a-{uuid.uuid4().hex[:8]}@example.com")
+    other_headers, _other_id = _auth_header(client, f"s307-b-{uuid.uuid4().hex[:8]}@example.com")
+
+    db = client.app.state.testing_sessionmaker()
+    activity = ActivityType(name="Run", slug=f"run-{uuid.uuid4().hex[:6]}", is_system=True)
+    unit = UnitType(name="Minutes", slug=f"min-{uuid.uuid4().hex[:6]}", is_system=True)
+    plan = WorkoutPlan(user_id=uuid.UUID(owner_id), name="Week")
+    db.add_all([activity, unit, plan])
+    db.flush()
+    db.add(
+        ActivityTypeUnitType(
+            activity_type_id=activity.id,
+            unit_type_id=unit.id,
+            sort_order=0,
+            per_set=False,
+        )
+    )
+    db.commit()
+    activity_id = str(activity.id)
+    unit_id = str(unit.id)
+    plan_id = str(plan.id)
+    db.close()
+
+    created = client.post(
+        "/sessions",
+        headers=owner_headers,
+        json={
+            "name": "Pull A",
+            "plan_id": plan_id,
+            "session_at": "2026-09-01T10:00:00Z",
+            "items": [
+                {
+                    "activity_type_id": activity_id,
+                    "notes": "easy",
+                    "measurements": [
+                        {
+                            "unit_type_id": unit_id,
+                            "planned_value": "30",
+                            "actual_value": "28",
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+    assert created.status_code == 201
+    source_id = created.json()["id"]
+    source_item_id = created.json()["items"][0]["id"]
+
+    denied = client.post(f"/sessions/{source_id}/clone", headers=other_headers)
+    assert denied.status_code == 404
+
+    cloned = client.post(
+        f"/sessions/{source_id}/clone",
+        headers=owner_headers,
+        json={"name": "Pull A Monday", "session_at": "2026-09-07T10:00:00Z"},
+    )
+    assert cloned.status_code == 201
+    clone = cloned.json()
+    assert clone["id"] != source_id
+    assert clone["source_session_id"] == source_id
+    assert clone["plan_id"] is None
+    assert clone["status"] == "planned"
+    assert clone["name"] == "Pull A Monday"
+    assert clone["items"][0]["id"] != source_item_id
+    assert clone["items"][0]["notes"] == "easy"
+    measurement = clone["items"][0]["measurements"][0]
+    assert measurement["planned_value"] == "30.000"
+    assert measurement["actual_value"] is None
+
+    edited = client.patch(
+        f"/sessions/{source_id}",
+        headers=owner_headers,
+        json={
+            "items": [
+                {
+                    "activity_type_id": activity_id,
+                    "measurements": [
+                        {"unit_type_id": unit_id, "planned_value": "99", "actual_value": "1"}
+                    ],
+                }
+            ]
+        },
+    )
+    assert edited.status_code == 200
+
+    fresh_clone = client.get(f"/sessions/{clone['id']}", headers=owner_headers)
+    assert fresh_clone.status_code == 200
+    still = fresh_clone.json()["items"][0]["measurements"][0]
+    assert still["planned_value"] == "30.000"
+    assert still["actual_value"] is None
+    source_now = client.get(f"/sessions/{source_id}", headers=owner_headers)
+    assert source_now.json()["items"][0]["measurements"][0]["planned_value"] == "99.000"
+
+
+

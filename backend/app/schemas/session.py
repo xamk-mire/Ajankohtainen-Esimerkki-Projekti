@@ -42,6 +42,14 @@ class SessionUpdate(BaseModel):
     items: list[SessionItemWrite] | None = None
 
 
+class SessionClone(BaseModel):
+    """Optional overrides. Omitted ``plan_id`` does not copy the source plan."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    session_at: datetime | None = None
+    plan_id: uuid.UUID | None = None
+
+
 class MeasurementRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

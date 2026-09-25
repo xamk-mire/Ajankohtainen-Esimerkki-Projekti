@@ -9,12 +9,13 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.repositories.session import SessionListFilters
-from app.schemas.session import SessionCreate, SessionRead, SessionUpdate
+from app.schemas.session import SessionClone, SessionCreate, SessionRead, SessionUpdate
 from app.services.sessions import (
     InvalidSessionRangeError,
     InvalidSessionReferenceError,
     PlanNotFoundError,
     SessionNotFoundError,
+    clone_session,
     create_session,
     delete_session,
     get_session,
@@ -100,6 +101,32 @@ def create_my_session(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=error.detail,
+        ) from None
+    return SessionRead.model_validate(session)
+
+
+@router.post(
+    "/{session_id}/clone",
+    response_model=SessionRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def clone_my_session(
+    session_id: uuid.UUID,
+    body: SessionClone | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Security(get_current_user),
+) -> SessionRead:
+    try:
+        session = clone_session(db, current_user, session_id, body)
+    except SessionNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        ) from None
+    except PlanNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plan not found",
         ) from None
     return SessionRead.model_validate(session)
 
