@@ -156,6 +156,12 @@ CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 `GET /plans/{id}` lists member sessions ordered by `session_at` ascending, with unscheduled sessions (`session_at` null) last. Attach with `POST /plans/{id}/sessions/{session_id}` and detach with `DELETE` on that path. Both set or clear `workout_sessions.plan_id`. There is no junction table. Attaching another user's session is **404** `Session not found`. A session can belong to only one plan, so attaching it moves it off any previous plan.
 
+## Activity types API
+
+`GET /activity-types` requires a Bearer token. It returns system exercises (`user_id` null) and the current user's custom types. Another user's custom type is omitted. Each row includes `unit_links` ordered by `sort_order`, with the linked unit's `slug`, `name`, and `unit_label`, plus `is_required` and `per_set`. There is no `unit_hint`.
+
+`POST /activity-types` creates a custom type owned by the caller (`is_system` false). Body: `name`, optional `slug` (otherwise derived from the name), and at least one `unit_links` entry (`unit_type_id`, optional `sort_order`, `is_required`, `per_set`). An unknown unit or a repeated unit is **422**. A slug you already use is **409**.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell

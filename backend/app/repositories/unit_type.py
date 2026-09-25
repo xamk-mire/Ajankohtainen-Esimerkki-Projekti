@@ -21,6 +21,14 @@ def get_activity_unit_link(
     ).first()
 
 
+def get_unit_types_by_ids(db: Session, unit_type_ids: list[uuid.UUID]) -> list[UnitType]:
+    if not unit_type_ids:
+        return []
+    return list(
+        db.scalars(select(UnitType).where(UnitType.id.in_(unit_type_ids))).all()
+    )
+
+
 def get_unit_type_by_slug(db: Session, slug: str) -> UnitType | None:
     return db.scalars(select(UnitType).where(UnitType.slug == slug)).first()
 
