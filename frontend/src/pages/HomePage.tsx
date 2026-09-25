@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { getApiBaseUrl, getHealth } from '@/api/client'
+import { queryKeys } from '@/api/queryKeys'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -12,28 +13,17 @@ import {
 type HealthState = 'loading' | 'ok' | 'failed'
 
 export default function HomePage() {
-  const [health, setHealth] = useState<HealthState>('loading')
   const apiBaseUrl = getApiBaseUrl()
+  const healthQuery = useQuery({
+    queryKey: queryKeys.health,
+    queryFn: getHealth,
+  })
 
-  useEffect(() => {
-    let cancelled = false
-
-    getHealth()
-      .then((data) => {
-        if (!cancelled) {
-          setHealth(data.status === 'ok' ? 'ok' : 'failed')
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHealth('failed')
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const health: HealthState = healthQuery.isPending
+    ? 'loading'
+    : healthQuery.isError || healthQuery.data.status !== 'ok'
+      ? 'failed'
+      : 'ok'
 
   const healthLabel =
     health === 'loading' ? 'checking…' : health === 'ok' ? 'OK' : 'failed'

@@ -229,6 +229,18 @@ npm run dev
 
 Then open http://localhost:5173. Start the API first so the health indicator can succeed.
 
+## TanStack Query
+
+`QueryClientProvider` wraps the app in `frontend/src/main.tsx`. The home page loads `GET /health` with `useQuery`. Later screens should use the helpers in `frontend/src/api/queryKeys.ts` and invalidate the same key after a mutation.
+
+| Key | Use |
+| --- | --- |
+| `['health']` | API health badge |
+| `['sessions', filters]` | Session list. `filters` is `{ from, to, status, activityTypeId, unscheduled, planId }` |
+| `['plans']` | Plan list |
+| `['plans', id]` | One plan |
+| `['calendar', from, to, planId]` | Dated sessions for a range. Use `null` when a bound or plan is omitted |
+
 ## Troubleshooting
 
 | Symptom | What to try |
