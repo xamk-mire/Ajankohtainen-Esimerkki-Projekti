@@ -26,6 +26,9 @@ export default function Header({ user, onLogout }: HeaderProps) {
           <Link className="text-sm text-muted-foreground hover:text-foreground" to="/calendar">
             Calendar
           </Link>
+          <Link className="text-sm text-muted-foreground hover:text-foreground" to="/goals">
+            Period goals
+          </Link>
         </nav>
       </div>
       <div className="flex items-center gap-3">

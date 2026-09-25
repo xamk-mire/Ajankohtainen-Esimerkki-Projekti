@@ -168,6 +168,10 @@ CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 `unit_type_id` must exist, or the write is **422**. `activity_type_id`, when set, must be a system exercise or one of your custom types. `GET /goals?active=true` or `active=false` filters that flag; omit it to list every goal you own. Deactivate with `PATCH` `{ "active": false }`. `DELETE` returns **204**.
 
+## Period goals
+
+`/goals` is behind the same login gate. It lists this user's period goals from `GET /goals`. **Create period goal** sends `unit_type_id`, a target greater than 0, and `week` or `month`. An exercise is optional. These are period targets, not planned sets. **Deactivate** sends `PATCH` `{ "active": false }`. **Activate** turns that flag back on. The unit list comes from the exercise catalog.
+
 ## Calendar API
 
 `GET /calendar` requires a Bearer token. It returns this user's sessions that have a `session_at`, ordered by that time. Unscheduled sessions are omitted. There are no generated weekday slots.
@@ -241,6 +245,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | `['plans', id]` | One plan |
 | `['calendar', from, to, planId]` | Dated sessions for a range. Use `null` when a bound or plan is omitted |
 | `['activity-types']` | Exercise catalog for selectors |
+| `['goals', active]` | Period goals. `active` is `true`, `false`, or `null` for every goal |
 | `['sessions', 'detail', id]` | One session |
 
 ## Dashboard

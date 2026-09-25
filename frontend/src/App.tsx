@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './auth/ProtectedRoute'
 import CalendarPage from './pages/CalendarPage'
 import DashboardPage from './pages/DashboardPage'
+import GoalsPage from './pages/GoalsPage'
 import LoginPage from './pages/LoginPage'
 import PlanDetailPage from './pages/PlanDetailPage'
 import PlansPage from './pages/PlansPage'
@@ -22,6 +23,7 @@ function App() {
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/plans/:planId" element={<PlanDetailPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/goals" element={<GoalsPage />} />
       </Route>
     </Routes>
   )

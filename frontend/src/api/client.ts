@@ -356,6 +356,41 @@ export function listActivityTypes(): Promise<ActivityTypeSummary[]> {
   return apiGet<ActivityTypeSummary[]>('/activity-types')
 }
 
+export type Goal = {
+  id: string
+  user_id: string
+  unit_type_id: string
+  activity_type_id: string | null
+  target_value: string | number
+  period: 'week' | 'month'
+  active: boolean
+  created_at: string
+}
+
+export type GoalWrite = {
+  unit_type_id: string
+  activity_type_id: string | null
+  target_value: number
+  period: 'week' | 'month'
+}
+
+export function listGoals(active: boolean | null = null): Promise<Goal[]> {
+  const params = new URLSearchParams()
+  if (active !== null) {
+    params.set('active', String(active))
+  }
+  const query = params.toString()
+  return apiGet<Goal[]>(query ? `/goals?${query}` : '/goals')
+}
+
+export function createGoal(body: GoalWrite): Promise<Goal> {
+  return apiPost<Goal>('/goals', body)
+}
+
+export function updateGoal(goalId: string, body: { active: boolean }): Promise<Goal> {
+  return apiPatch<Goal>(`/goals/${goalId}`, body)
+}
+
 export function createSession(body: SessionWrite): Promise<Session> {
   return apiPost<Session>('/sessions', body)
 }

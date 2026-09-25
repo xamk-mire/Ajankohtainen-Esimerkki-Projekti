@@ -17,5 +17,6 @@ export const queryKeys = {
   calendar: (from: string | null, to: string | null, planId: string | null) =>
     ['calendar', from, to, planId] as const,
   activityTypes: ['activity-types'] as const,
+  goals: (active: boolean | null = null) => ['goals', active] as const,
   session: (id: string) => ['sessions', 'detail', id] as const,
 }
