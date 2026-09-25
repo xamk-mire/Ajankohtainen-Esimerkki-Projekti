@@ -102,6 +102,19 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   return handleResponse<T>(path, response)
 }
 
+export async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(apiUrl(path), {
+    method: 'DELETE',
+    headers: requestHeaders(),
+  })
+  if (!response.ok) {
+    if (response.status === 401 && path !== '/auth/login') {
+      clearToken()
+    }
+    throw await parseError(response)
+  }
+}
+
 export type HealthResponse = {
   status: string
 }
@@ -269,4 +282,17 @@ export function createSession(body: SessionWrite): Promise<Session> {
 
 export function updateSession(sessionId: string, body: SessionWrite): Promise<Session> {
   return apiPatch<Session>(`/sessions/${sessionId}`, body)
+}
+
+export type SessionCloneBody = {
+  name?: string
+  session_at?: string | null
+}
+
+export function cloneSession(sessionId: string, body: SessionCloneBody): Promise<Session> {
+  return apiPost<Session>(`/sessions/${sessionId}/clone`, body)
+}
+
+export function deleteSession(sessionId: string): Promise<void> {
+  return apiDelete(`/sessions/${sessionId}`)
 }

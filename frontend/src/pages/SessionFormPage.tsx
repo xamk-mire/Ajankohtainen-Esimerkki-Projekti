@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ApiError,
   createSession,
+  cloneSession,
+  deleteSession,
   listActivityTypes,
   listPlans,
   getSession,
@@ -18,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -39,27 +42,88 @@ type DesignerProps = {
   initial: SessionDraft
   activities: ActivityTypeSummary[]
   plans: PlanSummary[]
+  sourceSessionId: string | null
+  clonedFromName: string | null
 }
 
-function SessionDesigner({ isNew, sessionId, initial, activities, plans }: DesignerProps) {
+function sessionAccessMessage(error: unknown): string | null {
+  if (!(error instanceof ApiError)) {
+    return null
+  }
+  if (error.status === 404) {
+    return 'Session not found.'
+  }
+  if (error.status === 403) {
+    return 'You cannot change this session.'
+  }
+  return error.message
+}
+
+async function refreshSessionQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  await queryClient.invalidateQueries({ queryKey: ['sessions'] })
+  await queryClient.invalidateQueries({ queryKey: queryKeys.plans })
+  await queryClient.invalidateQueries({ queryKey: ['calendar'] })
+}
+
+function SessionDesigner({
+  isNew,
+  sessionId,
+  initial,
+  activities,
+  plans,
+  sourceSessionId,
+  clonedFromName,
+}: DesignerProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState(initial)
   const [banner, setBanner] = useState<string | null>(null)
   const [activityToAdd, setActivityToAdd] = useState(activities[0]?.id ?? '')
+  const [cloneName, setCloneName] = useState(initial.name)
+  const [cloneAt, setCloneAt] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const save = useMutation({
     mutationFn: (body: SessionWrite) =>
       isNew || !sessionId ? createSession(body) : updateSession(sessionId, body),
     onSuccess: async (saved) => {
-      await queryClient.invalidateQueries({ queryKey: ['sessions'] })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.plans })
-      await queryClient.invalidateQueries({ queryKey: ['calendar'] })
+      await refreshSessionQueries(queryClient)
       if (isNew) {
         navigate(`/sessions/${saved.id}`, { replace: true })
       } else {
         setBanner(null)
       }
+    },
+  })
+
+  const clone = useMutation({
+    mutationFn: () => {
+      if (!sessionId) {
+        throw new Error('Missing session')
+      }
+      return cloneSession(sessionId, {
+        ...(cloneName.trim() ? { name: cloneName.trim() } : {}),
+        session_at: cloneAt ? new Date(cloneAt).toISOString() : null,
+      })
+    },
+    onSuccess: async (saved) => {
+      await refreshSessionQueries(queryClient)
+      navigate(`/sessions/${saved.id}`, {
+        state: { clonedFrom: draft.name.trim() || initial.name },
+      })
+    },
+  })
+
+  const remove = useMutation({
+    mutationFn: () => {
+      if (!sessionId) {
+        throw new Error('Missing session')
+      }
+      return deleteSession(sessionId)
+    },
+    onSuccess: async () => {
+      await refreshSessionQueries(queryClient)
+      navigate('/sessions', { replace: true })
     },
   })
 
@@ -96,15 +160,26 @@ function SessionDesigner({ isNew, sessionId, initial, activities, plans }: Desig
     save.mutate(body)
   }
 
-  const saveError =
-    save.error instanceof ApiError
-      ? save.error.message
-      : save.isError
-        ? 'Could not save this session.'
-        : null
+  const saveError = sessionAccessMessage(save.error) ?? (save.isError ? 'Could not save this session.' : null)
+  const cloneError =
+    sessionAccessMessage(clone.error) ?? (clone.isError ? 'Could not clone this session.' : null)
+  const deleteError =
+    sessionAccessMessage(remove.error) ?? (remove.isError ? 'Could not delete this session.' : null)
 
   return (
-    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+    <div className="flex flex-col gap-6">
+      {clonedFromName ? (
+        <p className="rounded-lg bg-muted px-3 py-2 text-sm">
+          Cloned from {clonedFromName}. Planned values were kept and actuals were cleared.
+          Editing {clonedFromName} will not change this copy.
+        </p>
+      ) : sourceSessionId ? (
+        <p className="rounded-lg bg-muted px-3 py-2 text-sm">
+          This session is a snapshot. Planned values were copied and actuals started empty.
+          Editing the original session does not change this copy.
+        </p>
+      ) : null}
+      <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
           <CardTitle>Session</CardTitle>
@@ -319,12 +394,101 @@ function SessionDesigner({ isNew, sessionId, initial, activities, plans }: Desig
         {save.isPending ? 'Saving…' : 'Save session'}
       </Button>
     </form>
+
+      {!isNew && sessionId ? (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Clone</CardTitle>
+              <CardDescription>
+                Creates a new session with the same exercises. Planned values are kept, actuals
+                are cleared, and the plan is not copied. Later edits to this session leave the
+                copy unchanged.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <label className="flex flex-col gap-1.5 text-sm font-medium">
+                Copy name
+                <input
+                  className={inputClassName}
+                  value={cloneName}
+                  onChange={(event) => setCloneName(event.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium">
+                Copy date
+                <input
+                  className={inputClassName}
+                  type="datetime-local"
+                  value={cloneAt}
+                  onChange={(event) => setCloneAt(event.target.value)}
+                />
+              </label>
+              <p className="text-xs text-muted-foreground sm:col-span-2">
+                Leave the date empty to make the copy unscheduled. The original time is not copied.
+              </p>
+              {cloneError ? (
+                <p className="text-sm text-destructive sm:col-span-2" role="alert">
+                  {cloneError}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={clone.isPending}
+                onClick={() => clone.mutate()}
+              >
+                {clone.isPending ? 'Cloning…' : 'Clone session'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Delete</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-start gap-3">
+              {confirmDelete ? (
+                <>
+                  <p className="text-sm">Delete this session? This cannot be undone.</p>
+                  {deleteError ? (
+                    <p className="text-sm text-destructive" role="alert">
+                      {deleteError}
+                    </p>
+                  ) : null}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={remove.isPending}
+                      onClick={() => remove.mutate()}
+                    >
+                      {remove.isPending ? 'Deleting…' : 'Delete session'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setConfirmDelete(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)}>
+                  Delete
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
+    </div>
   )
 }
 
 export default function SessionFormPage() {
   const { sessionId } = useParams()
+  const location = useLocation()
   const isNew = !sessionId
+  const clonedFromName =
+    (location.state as { clonedFrom?: string } | null)?.clonedFrom ?? null
   const activitiesQuery = useQuery({
     queryKey: queryKeys.activityTypes,
     queryFn: listActivityTypes,
@@ -340,6 +504,7 @@ export default function SessionFormPage() {
   })
 
   const missing = sessionQuery.error instanceof ApiError && sessionQuery.error.status === 404
+  const forbidden = sessionQuery.error instanceof ApiError && sessionQuery.error.status === 403
   const activities = activitiesQuery.data ?? []
   const ready =
     activitiesQuery.isSuccess &&
@@ -352,7 +517,7 @@ export default function SessionFormPage() {
         Back to sessions
       </Link>
       <h1 className="text-2xl font-semibold">{isNew ? 'New session' : 'Edit session'}</h1>
-      {!ready && !missing && !activitiesQuery.isError && !sessionQuery.isError ? (
+      {!ready && !missing && !forbidden && !activitiesQuery.isError && !sessionQuery.isError ? (
         <p className="text-sm text-muted-foreground">Loading session…</p>
       ) : null}
       {activitiesQuery.isError ? (
@@ -361,7 +526,12 @@ export default function SessionFormPage() {
         </p>
       ) : null}
       {missing ? <p className="text-sm text-muted-foreground">Session not found.</p> : null}
-      {sessionQuery.isError && !missing ? (
+      {forbidden ? (
+        <p className="text-sm text-destructive" role="alert">
+          You cannot change this session.
+        </p>
+      ) : null}
+      {sessionQuery.isError && !missing && !forbidden ? (
         <p className="text-sm text-destructive" role="alert">
           Could not load this session.
         </p>
@@ -378,6 +548,8 @@ export default function SessionFormPage() {
           }
           activities={activities}
           plans={plansQuery.data ?? []}
+          sourceSessionId={sessionQuery.data?.source_session_id ?? null}
+          clonedFromName={clonedFromName}
         />
       ) : null}
     </main>
