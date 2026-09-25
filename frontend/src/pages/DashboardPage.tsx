@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const activityNames = new Map(
     (activitiesQuery.data ?? []).map((activity) => [activity.id, activity.name]),
   )
-  const recent = recentDated(sessionsQuery.data ?? [])
+  const recent = recentDated(sessionsQuery.data?.items ?? [])
   const listError = sessionsQuery.isError
     ? failureMessage(sessionsQuery.error, 'Could not load sessions.', 'You cannot view these sessions.')
     : null

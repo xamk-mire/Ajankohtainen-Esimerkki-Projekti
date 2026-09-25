@@ -96,6 +96,6 @@ def test_cross_user_object_access_is_404(client: TestClient) -> None:
     assert client.get(f"/sessions/{session_id}", headers=owner).status_code == 200
     assert client.get(f"/plans/{plan_id}", headers=owner).status_code == 200
     assert client.get(f"/goals/{goal_id}", headers=owner).status_code == 200
-    assert client.get("/sessions", headers=other).json() == [other_session.json()]
+    assert client.get("/sessions", headers=other).json()["items"] == [other_session.json()]
     assert client.get("/plans", headers=other).json() == []
     assert client.get("/goals", headers=other).json() == []

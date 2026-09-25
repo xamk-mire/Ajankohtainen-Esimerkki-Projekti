@@ -85,3 +85,12 @@ class SessionRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: list[SessionItemRead]
+
+
+class SessionListPage(BaseModel):
+    items: list[SessionRead]
+    total: int = Field(description="Matching sessions for this user, before paging.")
+    page: int = Field(description="1-based page. 1 when limit is omitted.")
+    limit: int | None = Field(
+        description="Page size. Null when every matching session is returned.",
+    )

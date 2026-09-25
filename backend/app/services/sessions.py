@@ -34,7 +34,7 @@ def list_sessions(
     db: Session,
     user: User,
     filters: SessionListFilters | None = None,
-) -> list[WorkoutSession]:
+) -> tuple[list[WorkoutSession], int]:
     filters = filters or SessionListFilters()
     if (
         filters.starts_at is not None

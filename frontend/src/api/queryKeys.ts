@@ -7,6 +7,8 @@ export type SessionListFilters = {
   activityTypeId?: string | null
   unscheduled?: boolean | null
   planId?: string | null
+  page?: number | null
+  limit?: number | null
 }
 
 export const queryKeys = {

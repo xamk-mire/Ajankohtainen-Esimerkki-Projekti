@@ -97,7 +97,7 @@ def test_session_crud_is_owner_scoped(client: TestClient) -> None:
 
     listed = client.get("/sessions", headers=owner_headers)
     assert listed.status_code == 200
-    assert [row["id"] for row in listed.json()] == [session_id]
+    assert [row["id"] for row in listed.json()["items"]] == [session_id]
 
     hidden = client.get(f"/sessions/{session_id}", headers=other_headers)
     assert hidden.status_code == 404
@@ -218,7 +218,11 @@ def test_session_list_filters_stay_on_current_user(client: TestClient) -> None:
         "activity_type_id",
         "unscheduled",
         "plan_id",
+        "page",
+        "limit",
     } <= parameter_names
+    page_schema = spec["components"]["schemas"]["SessionListPage"]["properties"]
+    assert {"items", "total", "page", "limit"} <= set(page_schema)
 
     owner_headers, owner_id = _auth_header(client, f"s306-a-{uuid.uuid4().hex[:8]}@example.com")
     other_headers, other_id = _auth_header(client, f"s306-b-{uuid.uuid4().hex[:8]}@example.com")
@@ -289,7 +293,7 @@ def test_session_list_filters_stay_on_current_user(client: TestClient) -> None:
         params={"from": "2026-09-10T00:00:00Z", "to": "2026-09-10T23:59:59Z"},
     )
     assert in_range.status_code == 200
-    assert [row["id"] for row in in_range.json()] == [dated_id]
+    assert [row["id"] for row in in_range.json()["items"]] == [dated_id]
 
     bad_range = client.get(
         "/sessions",
@@ -299,28 +303,28 @@ def test_session_list_filters_stay_on_current_user(client: TestClient) -> None:
     assert bad_range.status_code == 400
 
     by_status = client.get("/sessions", headers=owner_headers, params={"status": "completed"})
-    assert [row["id"] for row in by_status.json()] == [unscheduled_id]
+    assert [row["id"] for row in by_status.json()["items"]] == [unscheduled_id]
 
     by_unscheduled = client.get(
         "/sessions",
         headers=owner_headers,
         params={"unscheduled": "true"},
     )
-    assert [row["id"] for row in by_unscheduled.json()] == [unscheduled_id]
+    assert [row["id"] for row in by_unscheduled.json()["items"]] == [unscheduled_id]
 
     by_activity = client.get(
         "/sessions",
         headers=owner_headers,
         params={"activity_type_id": activity_id},
     )
-    assert [row["id"] for row in by_activity.json()] == [dated_id]
+    assert [row["id"] for row in by_activity.json()["items"]] == [dated_id]
 
     by_own_plan = client.get(
         "/sessions",
         headers=owner_headers,
         params={"plan_id": own_plan_id},
     )
-    assert [row["id"] for row in by_own_plan.json()] == [dated_id]
+    assert [row["id"] for row in by_own_plan.json()["items"]] == [dated_id]
 
     by_foreign_plan = client.get(
         "/sessions",
@@ -328,7 +332,34 @@ def test_session_list_filters_stay_on_current_user(client: TestClient) -> None:
         params={"plan_id": foreign_plan_id},
     )
     assert by_foreign_plan.status_code == 200
-    assert by_foreign_plan.json() == []
+    assert by_foreign_plan.json()["items"] == []
+
+    first_page = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"page": 1, "limit": 1},
+    )
+    assert first_page.status_code == 200
+    first_body = first_page.json()
+    assert first_body["total"] == 2
+    assert first_body["page"] == 1
+    assert first_body["limit"] == 1
+    assert [row["id"] for row in first_body["items"]] == [unscheduled_id]
+
+    second_page = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"page": 2, "limit": 1},
+    )
+    assert [row["id"] for row in second_page.json()["items"]] == [dated_id]
+
+    past_end = client.get(
+        "/sessions",
+        headers=owner_headers,
+        params={"page": 3, "limit": 1},
+    )
+    assert past_end.json()["items"] == []
+    assert past_end.json()["total"] == 2
 
 
 def test_clone_session_is_an_isolated_snapshot(client: TestClient) -> None:

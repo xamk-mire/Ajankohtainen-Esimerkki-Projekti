@@ -274,7 +274,14 @@ export type SessionWrite = {
   items: SessionItemWrite[]
 }
 
-export function listSessions(filters: SessionListFilters = {}): Promise<Session[]> {
+export type SessionPage = {
+  items: Session[]
+  total: number
+  page: number
+  limit: number | null
+}
+
+export function listSessions(filters: SessionListFilters = {}): Promise<SessionPage> {
   const params = new URLSearchParams()
   if (filters.from) {
     params.set('from', filters.from)
@@ -296,8 +303,14 @@ export function listSessions(filters: SessionListFilters = {}): Promise<Session[
   if (filters.planId) {
     params.set('plan_id', filters.planId)
   }
+  if (filters.page) {
+    params.set('page', String(filters.page))
+  }
+  if (filters.limit) {
+    params.set('limit', String(filters.limit))
+  }
   const query = params.toString()
-  return apiGet<Session[]>(query ? `/sessions?${query}` : '/sessions')
+  return apiGet<SessionPage>(query ? `/sessions?${query}` : '/sessions')
 }
 
 export function getSession(sessionId: string): Promise<Session> {

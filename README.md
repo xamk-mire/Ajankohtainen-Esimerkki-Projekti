@@ -142,7 +142,7 @@ That covers register → login → `GET /auth/me`, and asserts **401** without a
 
 `/sessions` requires a Bearer token. List, create, read, patch, and delete apply only to the current user. Another user's session id returns **404** `Session not found` (the same response as a missing id). Optional `plan_id` must be a plan you own; otherwise **404** `Plan not found`.
 
-`GET /sessions` filters are combined with the current user: `from`, `to` (inclusive bounds on `session_at`), `status`, `activity_type_id`, `unscheduled` (`true` = no `session_at`, `false` = dated), and `plan_id`. `from` later than `to` is **400**. A `plan_id` you do not own returns an empty list, not that user's sessions.
+`GET /sessions` filters are combined with the current user: `from`, `to` (inclusive bounds on `session_at`), `status`, `activity_type_id`, `unscheduled` (`true` = no `session_at`, `false` = dated), and `plan_id`. `from` later than `to` is **400**. A `plan_id` you do not own returns an empty `items` list, not that user's sessions. `page` (1-based) and `limit` (1–100) page that list. Omit `limit` to return every match. The body is `{ items, total, page, limit }`. `limit` is null when the full list is returned. OpenAPI documents these query fields and `SessionListPage`.
 
 Create and patch accept nested `items` and `measurements`. Each measurement needs `planned_value`, `actual_value`, or both; both empty is **422**. `unit_type_id` must be linked to that exercise in `activity_type_unit_types`, or the write is **422**. If that link is `per_set`, `set_index` is required. Omitting `items` on patch leaves existing exercises in place. Sending `items` replaces them.
 
@@ -240,7 +240,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | Key | Use |
 | --- | --- |
 | `['health']` | API health badge |
-| `['sessions', filters]` | Session list. `filters` is `{ from, to, status, activityTypeId, unscheduled, planId }` |
+| `['sessions', filters]` | Session list page. `filters` includes `page` and `limit` when the sessions screen pages |
 | `['plans']` | Plan list |
 | `['plans', id]` | One plan |
 | `['calendar', from, to, planId]` | Dated sessions for a range. Use `null` when a bound or plan is omitted |
@@ -254,7 +254,7 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 
 ## Sessions list
 
-`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The API omits other users' rows. **New session** opens `/sessions/new`. **Edit** opens `/sessions/:id`. With no sessions and no filters, the list says **Create your first session**. A failed load, a failed save, or a forbidden response shows an error banner.
+`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The list also sends `page` and `limit` (10, 20, or 50) and shows previous and next. Omitting `limit` returns every matching session in `{ items, total, page, limit }`. The API omits other users' rows. **New session** opens `/sessions/new`. **Edit** opens `/sessions/:id`. With no sessions and no filters, the list says **Create your first session**. A failed load, a failed save, or a forbidden response shows an error banner.
 
 The designer saves metadata plus ordered exercises. The activity selector lists system exercises and your custom types. Each option and the line under the control summarize that exercise's unit links (`name`, `unit_label`, and `per set` when the link says so). There is no `unit_hint`. The same selector filters the session list. Measurement fields come from that exercise's unit links, including a planned and an actual input. Either value can be left empty; a unit with both empty is omitted. Strength exercises (`per_set`) use numbered sets. Leave **When** empty to save `session_at` as null. **Plan** is optional.
 

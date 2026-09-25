@@ -9,7 +9,7 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.repositories.session import SessionListFilters
-from app.schemas.session import SessionClone, SessionCreate, SessionRead, SessionUpdate
+from app.schemas.session import SessionClone, SessionCreate, SessionListPage, SessionRead, SessionUpdate
 from app.services.sessions import (
     InvalidSessionRangeError,
     InvalidSessionReferenceError,
@@ -26,7 +26,7 @@ from app.services.sessions import (
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
-@router.get("", response_model=list[SessionRead])
+@router.get("", response_model=SessionListPage)
 def list_my_sessions(
     session_from: Annotated[
         datetime | None,
@@ -60,11 +60,23 @@ def list_my_sessions(
         uuid.UUID | None,
         Query(description="Only this user's sessions with this plan_id."),
     ] = None,
+    page: Annotated[
+        int,
+        Query(ge=1, description="1-based page. Applies when limit is set."),
+    ] = 1,
+    limit: Annotated[
+        int | None,
+        Query(
+            ge=1,
+            le=100,
+            description="Page size. Omit to return every matching session.",
+        ),
+    ] = None,
     db: Session = Depends(get_db),
     current_user: User = Security(get_current_user),
-) -> list[SessionRead]:
+) -> SessionListPage:
     try:
-        sessions = list_sessions(
+        sessions, total = list_sessions(
             db,
             current_user,
             SessionListFilters(
@@ -74,6 +86,8 @@ def list_my_sessions(
                 activity_type_id=activity_type_id,
                 unscheduled=unscheduled,
                 plan_id=plan_id,
+                page=page,
+                limit=limit,
             ),
         )
     except InvalidSessionRangeError:
@@ -81,7 +95,12 @@ def list_my_sessions(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="from must not be after to",
         ) from None
-    return [SessionRead.model_validate(session) for session in sessions]
+    return SessionListPage(
+        items=[SessionRead.model_validate(session) for session in sessions],
+        total=total,
+        page=page if limit is not None else 1,
+        limit=limit,
+    )
 
 
 @router.post("", response_model=SessionRead, status_code=status.HTTP_201_CREATED)

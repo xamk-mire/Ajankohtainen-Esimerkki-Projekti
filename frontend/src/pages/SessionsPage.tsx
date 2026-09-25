@@ -27,6 +27,8 @@ const emptyFilters: SessionListFilters = {
   activityTypeId: null,
   unscheduled: null,
   planId: null,
+  page: 1,
+  limit: 20,
 }
 
 type DraftFilters = {
@@ -47,7 +49,7 @@ const emptyDraft: DraftFilters = {
   activityTypeId: '',
 }
 
-function filtersFromDraft(draft: DraftFilters): SessionListFilters | string {
+function filtersFromDraft(draft: DraftFilters, limit: number): SessionListFilters | string {
   if (draft.from && draft.to && draft.from > draft.to) {
     return 'From must not be after to.'
   }
@@ -60,6 +62,8 @@ function filtersFromDraft(draft: DraftFilters): SessionListFilters | string {
     unscheduled:
       draft.unscheduled === 'true' ? true : draft.unscheduled === 'false' ? false : null,
     planId: draft.planId || null,
+    page: 1,
+    limit,
   }
 }
 
@@ -92,7 +96,7 @@ export default function SessionsPage() {
 
   function handleApply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const next = filtersFromDraft(draft)
+    const next = filtersFromDraft(draft, applied.limit ?? 20)
     if (typeof next === 'string') {
       setRangeError(next)
       return
@@ -107,8 +111,21 @@ export default function SessionsPage() {
     setRangeError(null)
   }
 
-  const sessions = sessionsQuery.data ?? []
-  const filtersActive = Object.values(applied).some((value) => value !== null)
+  const sessions = sessionsQuery.data?.items ?? []
+  const total = sessionsQuery.data?.total ?? 0
+  const page = applied.page ?? 1
+  const limit = applied.limit ?? 20
+  const pageCount = Math.max(1, Math.ceil(total / limit))
+  const rangeStart = total === 0 ? 0 : (page - 1) * limit + 1
+  const rangeEnd = Math.min(page * limit, total)
+  const filtersActive = [
+    applied.from,
+    applied.to,
+    applied.status,
+    applied.activityTypeId,
+    applied.unscheduled,
+    applied.planId,
+  ].some((value) => value !== null && value !== undefined)
   const listError = sessionsQuery.isError
     ? failureMessage(sessionsQuery.error, 'Could not load sessions.', 'You cannot view these sessions.')
     : null
@@ -271,6 +288,51 @@ export default function SessionsPage() {
           </li>
         ))}
       </ul>
+      {sessionsQuery.isSuccess && total > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {rangeStart}–{rangeEnd} of {total}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-sm">
+              Page size
+              <div className="w-20">
+                <select
+                  className={inputClassName}
+                  value={String(limit)}
+                  onChange={(event) => {
+                    const nextLimit = Number(event.target.value)
+                    setApplied((current) => ({ ...current, limit: nextLimit, page: 1 }))
+                  }}
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() => setApplied((current) => ({ ...current, page: page - 1 }))}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {pageCount}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={page >= pageCount}
+              onClick={() => setApplied((current) => ({ ...current, page: page + 1 }))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

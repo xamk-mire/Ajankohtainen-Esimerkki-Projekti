@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.workout_session import WorkoutSession
@@ -21,20 +21,12 @@ class SessionListFilters:
     activity_type_id: uuid.UUID | None = None
     unscheduled: bool | None = None
     plan_id: uuid.UUID | None = None
+    page: int = 1
+    limit: int | None = None
 
 
-def list_sessions_for_user(
-    db: Session,
-    user_id: uuid.UUID,
-    filters: SessionListFilters | None = None,
-) -> list[WorkoutSession]:
-    filters = filters or SessionListFilters()
-    statement = (
-        select(WorkoutSession)
-        .where(WorkoutSession.user_id == user_id)
-        .options(_session_load)
-        .order_by(WorkoutSession.created_at.desc())
-    )
+def _filtered_sessions(user_id: uuid.UUID, filters: SessionListFilters):
+    statement = select(WorkoutSession).where(WorkoutSession.user_id == user_id)
     if filters.starts_at is not None:
         statement = statement.where(WorkoutSession.session_at >= filters.starts_at)
     if filters.ends_at is not None:
@@ -53,7 +45,23 @@ def list_sessions_for_user(
         statement = statement.where(WorkoutSession.session_at.is_not(None))
     if filters.plan_id is not None:
         statement = statement.where(WorkoutSession.plan_id == filters.plan_id)
-    return list(db.scalars(statement).unique().all())
+    return statement
+
+
+def list_sessions_for_user(
+    db: Session,
+    user_id: uuid.UUID,
+    filters: SessionListFilters | None = None,
+) -> tuple[list[WorkoutSession], int]:
+    filters = filters or SessionListFilters()
+    filtered = _filtered_sessions(user_id, filters)
+    total = db.scalar(select(func.count()).select_from(filtered.subquery())) or 0
+    statement = filtered.options(_session_load).order_by(WorkoutSession.created_at.desc())
+    if filters.limit is not None:
+        offset = (filters.page - 1) * filters.limit
+        statement = statement.offset(offset).limit(filters.limit)
+    rows = list(db.scalars(statement).unique().all())
+    return rows, total
 
 
 def get_session_for_user(

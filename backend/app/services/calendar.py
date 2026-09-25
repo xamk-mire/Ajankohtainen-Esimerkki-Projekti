@@ -22,7 +22,7 @@ def list_calendar(
     Unscheduled rows are excluded. A plan_id the user does not own matches
     nothing, because the session list is already limited to user_id.
     """
-    sessions = list_sessions(
+    sessions, _total = list_sessions(
         db,
         user,
         SessionListFilters(

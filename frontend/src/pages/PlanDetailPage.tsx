@@ -185,7 +185,7 @@ export default function PlanDetailPage() {
   const dated = members.filter((session) => session.session_at)
   const unscheduled = members.filter((session) => !session.session_at)
   const memberIds = new Set(members.map((session) => session.id))
-  const attachable = (sessionsQuery.data ?? []).filter((session) => !memberIds.has(session.id))
+  const attachable = (sessionsQuery.data?.items ?? []).filter((session) => !memberIds.has(session.id))
   const saveError = planAccessMessage(save.error) ?? (save.isError ? 'Could not save this plan.' : null)
   const deleteError = planAccessMessage(remove.error) ?? (remove.isError ? 'Could not delete this plan.' : null)
   const attachError = planAccessMessage(attach.error) ?? (attach.isError ? 'Could not attach that session.' : null)
