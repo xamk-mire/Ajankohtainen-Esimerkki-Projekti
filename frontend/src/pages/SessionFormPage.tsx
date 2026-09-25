@@ -16,6 +16,7 @@ import {
 } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
 import MeasurementEditor from '@/components/MeasurementEditor'
+import ActivityTypeSelect from '@/components/ActivityTypeSelect'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -305,11 +306,11 @@ function SessionDesigner({
             <CardContent className="flex flex-col gap-4">
               <label className="flex flex-col gap-1.5 text-sm font-medium">
                 Activity
-                <select
-                  className={inputClassName}
+                <ActivityTypeSelect
+                  activities={activities}
                   value={item.activityTypeId}
-                  onChange={(event) => {
-                    const next = activities.find((candidate) => candidate.id === event.target.value)
+                  onChange={(activityId) => {
+                    const next = activities.find((candidate) => candidate.id === activityId)
                     if (!next) {
                       return
                     }
@@ -320,13 +321,7 @@ function SessionDesigner({
                       sets: rebuilt.sets,
                     })
                   }}
-                >
-                  {activities.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
               <MeasurementEditor
                 activity={activity}
@@ -351,17 +346,11 @@ function SessionDesigner({
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex min-w-48 flex-1 flex-col gap-1.5 text-sm font-medium">
           Add exercise
-          <select
-            className={inputClassName}
+          <ActivityTypeSelect
+            activities={activities}
             value={activityToAdd}
-            onChange={(event) => setActivityToAdd(event.target.value)}
-          >
-            {activities.map((activity) => (
-              <option key={activity.id} value={activity.id}>
-                {activity.name}
-              </option>
-            ))}
-          </select>
+            onChange={setActivityToAdd}
+          />
         </label>
         <Button
           type="button"

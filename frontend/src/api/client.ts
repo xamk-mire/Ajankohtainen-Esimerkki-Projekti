@@ -211,6 +211,7 @@ export type ActivityUnitLink = {
 export type ActivityTypeSummary = {
   id: string
   name: string
+  is_system: boolean
   unit_links: ActivityUnitLink[]
 }
 

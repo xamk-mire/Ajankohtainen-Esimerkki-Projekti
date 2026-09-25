@@ -9,6 +9,7 @@ import {
 } from '@/api/client'
 import { queryKeys, type SessionListFilters } from '@/api/queryKeys'
 import { Badge } from '@/components/ui/badge'
+import ActivityTypeSelect from '@/components/ActivityTypeSelect'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Card,
@@ -203,18 +204,13 @@ export default function SessionsPage() {
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-medium">
               Activity
-              <select
-                className={inputClassName}
+              <ActivityTypeSelect
+                activities={activitiesQuery.data ?? []}
                 value={draft.activityTypeId}
-                onChange={(event) => updateDraft({ activityTypeId: event.target.value })}
-              >
-                <option value="">Any</option>
-                {(activitiesQuery.data ?? []).map((activity) => (
-                  <option key={activity.id} value={activity.id}>
-                    {activity.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(activityId) => updateDraft({ activityTypeId: activityId })}
+                allowEmpty
+                emptyLabel="Any"
+              />
             </label>
             {rangeError ? (
               <p className="text-sm text-destructive sm:col-span-2" role="alert">
