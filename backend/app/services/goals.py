@@ -5,13 +5,10 @@ from sqlalchemy.orm import Session
 from app.models.goal import Goal
 from app.models.user import User
 from app.repositories.activity_type import get_visible_activity_type
-from app.repositories.goal import get_goal_for_user, list_goals_for_user
+from app.repositories.goal import list_goals_for_user
 from app.repositories.unit_type import get_unit_type_by_id
 from app.schemas.goal import GoalCreate, GoalUpdate
-
-
-class GoalNotFoundError(Exception):
-    """Raised when the goal is missing or belongs to another user."""
+from app.services.ownership import GoalNotFoundError, require_goal
 
 
 class InvalidGoalError(Exception):
@@ -27,10 +24,7 @@ def list_goals(db: Session, user: User, *, active: bool | None = None) -> list[G
 
 
 def get_goal(db: Session, user: User, goal_id: uuid.UUID) -> Goal:
-    goal = get_goal_for_user(db, goal_id, user.id)
-    if goal is None:
-        raise GoalNotFoundError()
-    return goal
+    return require_goal(db, user, goal_id)
 
 
 def _require_unit(db: Session, unit_type_id: uuid.UUID) -> None:
@@ -72,9 +66,7 @@ def update_goal(
     goal_id: uuid.UUID,
     data: GoalUpdate,
 ) -> Goal:
-    goal = get_goal_for_user(db, goal_id, user.id)
-    if goal is None:
-        raise GoalNotFoundError()
+    goal = require_goal(db, user, goal_id)
     fields = data.model_fields_set
     if "unit_type_id" in fields:
         if data.unit_type_id is None:
@@ -102,8 +94,6 @@ def update_goal(
 
 
 def delete_goal(db: Session, user: User, goal_id: uuid.UUID) -> None:
-    goal = get_goal_for_user(db, goal_id, user.id)
-    if goal is None:
-        raise GoalNotFoundError()
+    goal = require_goal(db, user, goal_id)
     db.delete(goal)
     db.commit()

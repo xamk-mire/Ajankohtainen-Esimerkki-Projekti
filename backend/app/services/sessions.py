@@ -7,22 +7,15 @@ from app.models.user import User
 from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
 from app.models.workout_session_measurement import WorkoutSessionMeasurement
-from app.repositories.plan import get_plan_for_user
-from app.repositories.session import (
-    SessionListFilters,
-    get_session_for_user,
-    list_sessions_for_user,
-)
+from app.repositories.session import SessionListFilters, list_sessions_for_user
 from app.repositories.unit_type import get_activity_unit_link
 from app.schemas.session import SessionClone, SessionCreate, SessionItemWrite, SessionUpdate
-
-
-class SessionNotFoundError(Exception):
-    """Raised when the session is missing or belongs to another user."""
-
-
-class PlanNotFoundError(Exception):
-    """Raised when plan_id is missing or belongs to another user."""
+from app.services.ownership import (
+    PlanNotFoundError,
+    SessionNotFoundError,
+    require_plan,
+    require_session,
+)
 
 
 class InvalidSessionRangeError(Exception):
@@ -53,14 +46,11 @@ def list_sessions(
 
 
 def get_session(db: Session, user: User, session_id: uuid.UUID) -> WorkoutSession:
-    session = get_session_for_user(db, session_id, user.id)
-    if session is None:
-        raise SessionNotFoundError()
-    return session
+    return require_session(db, user, session_id)
 
 
 def create_session(db: Session, user: User, data: SessionCreate) -> WorkoutSession:
-    _require_owned_plan(db, user.id, data.plan_id)
+    _require_owned_plan(db, user, data.plan_id)
     session = WorkoutSession(
         user_id=user.id,
         name=data.name,
@@ -100,7 +90,7 @@ def update_session(
     if "intensity" in fields:
         session.intensity = data.intensity
     if "plan_id" in fields:
-        _require_owned_plan(db, user.id, data.plan_id)
+        _require_owned_plan(db, user, data.plan_id)
         session.plan_id = data.plan_id
     if "items" in fields:
         session.items.clear()
@@ -126,7 +116,7 @@ def clone_session(
     source = get_session(db, user, session_id)
     data = data or SessionClone()
     plan_id = data.plan_id if "plan_id" in data.model_fields_set else None
-    _require_owned_plan(db, user.id, plan_id)
+    _require_owned_plan(db, user, plan_id)
     clone = WorkoutSession(
         user_id=user.id,
         name=data.name or source.name,
@@ -162,13 +152,12 @@ def _copy_item(item: WorkoutSessionItem) -> WorkoutSessionItem:
 
 def _require_owned_plan(
     db: Session,
-    user_id: uuid.UUID,
+    user: User,
     plan_id: uuid.UUID | None,
 ) -> None:
     if plan_id is None:
         return
-    if get_plan_for_user(db, plan_id, user_id) is None:
-        raise PlanNotFoundError()
+    require_plan(db, user, plan_id)
 
 
 def _build_item(db: Session, data: SessionItemWrite) -> WorkoutSessionItem:

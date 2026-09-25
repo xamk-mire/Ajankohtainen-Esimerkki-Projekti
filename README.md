@@ -168,6 +168,14 @@ CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
 `unit_type_id` must exist, or the write is **422**. `activity_type_id`, when set, must be a system exercise or one of your custom types. `GET /goals?active=true` or `active=false` filters that flag; omit it to list every goal you own. Deactivate with `PATCH` `{ "active": false }`. `DELETE` returns **204**.
 
+## Ownership
+
+Get, update, and delete for a session, plan, or goal load the row only when `user_id` matches the JWT user. A missing id and another user's id both return **404** with the same detail: `Session not found`, `Plan not found`, or `Goal not found`. These routes do not use **403**, so a caller cannot tell whether the id exists.
+
+The same rule covers attaching or detaching a session on a plan, the source session of a clone, and an optional `plan_id` on a session write. Detach also returns `Session not found` when the session is not a member of that plan. List filters stay on the current user. `GET /sessions?plan_id=` for a plan you do not own is **200** with an empty list.
+
+S3-22 will turn this into a two-account demo. Use these status codes and detail strings there.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell

@@ -1,0 +1,101 @@
+import uuid
+
+from fastapi.testclient import TestClient
+
+from app.models.unit_type import UnitType
+
+
+def _auth_header(client: TestClient, email: str) -> dict[str, str]:
+    created = client.post(
+        "/auth/register",
+        json={
+            "email": email,
+            "password": "demo-pass-1",
+            "display_name": "Owner Tester",
+        },
+    )
+    assert created.status_code == 201
+    login = client.post(
+        "/auth/login",
+        json={"email": email, "password": "demo-pass-1"},
+    )
+    assert login.status_code == 200
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+
+def _denied(response, detail: str) -> None:
+    assert response.status_code == 404
+    assert response.json()["detail"] == detail
+
+
+def test_cross_user_object_access_is_404(client: TestClient) -> None:
+    owner = _auth_header(client, f"s311-a-{uuid.uuid4().hex[:8]}@example.com")
+    other = _auth_header(client, f"s311-b-{uuid.uuid4().hex[:8]}@example.com")
+
+    db = client.app.state.testing_sessionmaker()
+    unit = UnitType(
+        name="Distance",
+        slug=f"distance-{uuid.uuid4().hex[:6]}",
+        is_system=True,
+    )
+    db.add(unit)
+    db.commit()
+    unit_id = str(unit.id)
+    db.close()
+
+    session = client.post("/sessions", headers=owner, json={"name": "Easy run"})
+    plan = client.post("/plans", headers=owner, json={"name": "Pull block"})
+    goal = client.post(
+        "/goals",
+        headers=owner,
+        json={"unit_type_id": unit_id, "target_value": "20", "period": "week"},
+    )
+    assert session.status_code == 201
+    assert plan.status_code == 201
+    assert goal.status_code == 201
+    session_id = session.json()["id"]
+    plan_id = plan.json()["id"]
+    goal_id = goal.json()["id"]
+
+    _denied(client.get(f"/sessions/{session_id}", headers=other), "Session not found")
+    _denied(
+        client.patch(f"/sessions/{session_id}", headers=other, json={"notes": "nope"}),
+        "Session not found",
+    )
+    _denied(client.delete(f"/sessions/{session_id}", headers=other), "Session not found")
+    _denied(client.post(f"/sessions/{session_id}/clone", headers=other), "Session not found")
+
+    _denied(client.get(f"/plans/{plan_id}", headers=other), "Plan not found")
+    _denied(
+        client.patch(f"/plans/{plan_id}", headers=other, json={"notes": "nope"}),
+        "Plan not found",
+    )
+    _denied(client.delete(f"/plans/{plan_id}", headers=other), "Plan not found")
+    _denied(
+        client.post(f"/plans/{plan_id}/sessions/{session_id}", headers=other),
+        "Plan not found",
+    )
+
+    other_session = client.post("/sessions", headers=other, json={"name": "Not yours"})
+    assert other_session.status_code == 201
+    _denied(
+        client.post(
+            f"/plans/{plan_id}/sessions/{other_session.json()['id']}",
+            headers=owner,
+        ),
+        "Session not found",
+    )
+
+    _denied(client.get(f"/goals/{goal_id}", headers=other), "Goal not found")
+    _denied(
+        client.patch(f"/goals/{goal_id}", headers=other, json={"active": False}),
+        "Goal not found",
+    )
+    _denied(client.delete(f"/goals/{goal_id}", headers=other), "Goal not found")
+
+    assert client.get(f"/sessions/{session_id}", headers=owner).status_code == 200
+    assert client.get(f"/plans/{plan_id}", headers=owner).status_code == 200
+    assert client.get(f"/goals/{goal_id}", headers=owner).status_code == 200
+    assert client.get("/sessions", headers=other).json() == [other_session.json()]
+    assert client.get("/plans", headers=other).json() == []
+    assert client.get("/goals", headers=other).json() == []
