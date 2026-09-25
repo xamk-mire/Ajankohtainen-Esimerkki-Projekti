@@ -150,6 +150,12 @@ Create and patch accept nested `items` and `measurements`. Each measurement need
 
 CORS allows `GET`, `POST`, `PATCH`, `DELETE`, and `OPTIONS`.
 
+## Plans API
+
+`/plans` requires a Bearer token and is limited to the current user. Another user's plan id is **404** `Plan not found`. `start_date` and `length_weeks` are metadata only.
+
+`GET /plans/{id}` lists member sessions ordered by `session_at` ascending, with unscheduled sessions (`session_at` null) last. Attach with `POST /plans/{id}/sessions/{session_id}` and detach with `DELETE` on that path. Both set or clear `workout_sessions.plan_id`. There is no junction table. Attaching another user's session is **404** `Session not found`. A session can belong to only one plan, so attaching it moves it off any previous plan.
+
 If you run Uvicorn on the host instead of Compose, from `backend/` (venv with `requirements.txt`, `.env` pointing at `localhost`):
 
 ```powershell

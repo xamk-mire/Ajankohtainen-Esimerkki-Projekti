@@ -14,6 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.admin import setup_admin
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.plans import router as plans_router
 from app.api.sessions import router as sessions_router
 from app.core.config import get_settings
 
@@ -32,4 +33,5 @@ app.add_middleware(SessionMiddleware, secret_key=settings.sqladmin_secret_key)
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(sessions_router)
+app.include_router(plans_router)
 setup_admin(app)

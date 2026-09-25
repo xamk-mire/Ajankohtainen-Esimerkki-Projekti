@@ -7,9 +7,9 @@ from app.models.user import User
 from app.models.workout_session import WorkoutSession
 from app.models.workout_session_item import WorkoutSessionItem
 from app.models.workout_session_measurement import WorkoutSessionMeasurement
+from app.repositories.plan import get_plan_for_user
 from app.repositories.session import (
     SessionListFilters,
-    get_plan_for_user,
     get_session_for_user,
     list_sessions_for_user,
 )
