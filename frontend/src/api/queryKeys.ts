@@ -16,4 +16,6 @@ export const queryKeys = {
   plan: (id: string) => ['plans', id] as const,
   calendar: (from: string | null, to: string | null, planId: string | null) =>
     ['calendar', from, to, planId] as const,
+  activityTypes: ['activity-types'] as const,
+  session: (id: string) => ['sessions', 'detail', id] as const,
 }

@@ -1,4 +1,5 @@
 import { clearToken, getToken } from '@/auth/token'
+import type { SessionListFilters } from '@/api/queryKeys'
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -132,4 +133,83 @@ export function loginUser(payload: LoginPayload): Promise<TokenResponse> {
 
 export function getMe(): Promise<UserPublic> {
   return apiGet<UserPublic>('/auth/me')
+}
+
+export type SessionMeasurement = {
+  id: string
+  unit_type_id: string
+  planned_value: string | null
+  actual_value: string | null
+  set_index: number | null
+}
+
+export type SessionItem = {
+  id: string
+  activity_type_id: string
+  sort_order: number
+  notes: string | null
+  measurements: SessionMeasurement[]
+}
+
+export type Session = {
+  id: string
+  user_id: string
+  name: string
+  session_at: string | null
+  status: string
+  notes: string | null
+  intensity: number | null
+  plan_id: string | null
+  source_session_id: string | null
+  created_at: string
+  updated_at: string
+  items: SessionItem[]
+}
+
+export type PlanSummary = {
+  id: string
+  name: string
+}
+
+export type ActivityTypeSummary = {
+  id: string
+  name: string
+}
+
+export function listSessions(filters: SessionListFilters = {}): Promise<Session[]> {
+  const params = new URLSearchParams()
+  if (filters.from) {
+    params.set('from', filters.from)
+  }
+  if (filters.to) {
+    params.set('to', filters.to)
+  }
+  if (filters.status) {
+    params.set('status', filters.status)
+  }
+  if (filters.activityTypeId) {
+    params.set('activity_type_id', filters.activityTypeId)
+  }
+  if (filters.unscheduled === true) {
+    params.set('unscheduled', 'true')
+  } else if (filters.unscheduled === false) {
+    params.set('unscheduled', 'false')
+  }
+  if (filters.planId) {
+    params.set('plan_id', filters.planId)
+  }
+  const query = params.toString()
+  return apiGet<Session[]>(query ? `/sessions?${query}` : '/sessions')
+}
+
+export function getSession(sessionId: string): Promise<Session> {
+  return apiGet<Session>(`/sessions/${sessionId}`)
+}
+
+export function listPlans(): Promise<PlanSummary[]> {
+  return apiGet<PlanSummary[]>('/plans')
+}
+
+export function listActivityTypes(): Promise<ActivityTypeSummary[]> {
+  return apiGet<ActivityTypeSummary[]>('/activity-types')
 }

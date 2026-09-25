@@ -240,6 +240,12 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 | `['plans']` | Plan list |
 | `['plans', id]` | One plan |
 | `['calendar', from, to, planId]` | Dated sessions for a range. Use `null` when a bound or plan is omitted |
+| `['activity-types']` | Exercise catalog for selectors |
+| `['sessions', 'detail', id]` | One session |
+
+## Sessions list
+
+`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The API omits other users' rows. Each session links to `/sessions/:id`, which shows the saved session until the designer can edit it.
 
 ## Troubleshooting
 

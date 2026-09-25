@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getApiBaseUrl, getHealth } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
@@ -50,6 +51,11 @@ export default function HomePage() {
           <p className="flex items-center gap-2 text-sm">
             API health:{' '}
             <Badge variant={healthVariant}>{healthLabel}</Badge>
+          </p>
+          <p className="text-sm">
+            <Link className="text-primary underline-offset-4 hover:underline" to="/sessions">
+              Sessions
+            </Link>
           </p>
         </CardContent>
       </Card>
