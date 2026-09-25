@@ -245,7 +245,9 @@ Then open http://localhost:5173. Start the API first so the health indicator can
 
 ## Sessions list
 
-`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The API omits other users' rows. Each session links to `/sessions/:id`, which shows the saved session until the designer can edit it.
+`/sessions` is behind the same login gate as `/`. It loads `GET /sessions` for the current user and sends filters as query parameters: `from`, `to` (local-day bounds), `status`, `unscheduled`, `plan_id`, and `activity_type_id`. The API omits other users' rows. **New session** opens `/sessions/new`. **Edit** opens `/sessions/:id`.
+
+The designer saves metadata plus ordered exercises. Measurement fields come from that exercise's unit links, including a planned and an actual input. Either value can be left empty; a unit with both empty is omitted. Strength exercises (`per_set`) use numbered sets. Leave **When** empty to save `session_at` as null. **Plan** is optional.
 
 ## Troubleshooting
 

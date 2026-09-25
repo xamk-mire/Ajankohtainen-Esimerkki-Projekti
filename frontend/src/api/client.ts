@@ -93,6 +93,15 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return handleResponse<T>(path, response)
 }
 
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(apiUrl(path), {
+    method: 'PATCH',
+    headers: requestHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(body),
+  })
+  return handleResponse<T>(path, response)
+}
+
 export type HealthResponse = {
   status: string
 }
@@ -171,9 +180,49 @@ export type PlanSummary = {
   name: string
 }
 
+export type UnitTypeSummary = {
+  id: string
+  name: string
+  slug: string
+  unit_label: string | null
+}
+
+export type ActivityUnitLink = {
+  unit_type_id: string
+  sort_order: number
+  is_required: boolean
+  per_set: boolean
+  unit_type: UnitTypeSummary
+}
+
 export type ActivityTypeSummary = {
   id: string
   name: string
+  unit_links: ActivityUnitLink[]
+}
+
+export type SessionMeasurementWrite = {
+  unit_type_id: string
+  planned_value: string | null
+  actual_value: string | null
+  set_index: number | null
+}
+
+export type SessionItemWrite = {
+  activity_type_id: string
+  sort_order: number
+  notes: string | null
+  measurements: SessionMeasurementWrite[]
+}
+
+export type SessionWrite = {
+  name: string
+  session_at: string | null
+  status: 'planned' | 'in_progress' | 'completed'
+  notes: string | null
+  intensity: number | null
+  plan_id: string | null
+  items: SessionItemWrite[]
 }
 
 export function listSessions(filters: SessionListFilters = {}): Promise<Session[]> {
@@ -212,4 +261,12 @@ export function listPlans(): Promise<PlanSummary[]> {
 
 export function listActivityTypes(): Promise<ActivityTypeSummary[]> {
   return apiGet<ActivityTypeSummary[]>('/activity-types')
+}
+
+export function createSession(body: SessionWrite): Promise<Session> {
+  return apiPost<Session>('/sessions', body)
+}
+
+export function updateSession(sessionId: string, body: SessionWrite): Promise<Session> {
+  return apiPatch<Session>(`/sessions/${sessionId}`, body)
 }

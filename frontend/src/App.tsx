@@ -14,6 +14,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/sessions" element={<SessionsPage />} />
+        <Route path="/sessions/new" element={<SessionFormPage />} />
         <Route path="/sessions/:sessionId" element={<SessionFormPage />} />
       </Route>
     </Routes>

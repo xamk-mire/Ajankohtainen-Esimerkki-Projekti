@@ -9,7 +9,7 @@ import {
 } from '@/api/client'
 import { queryKeys, type SessionListFilters } from '@/api/queryKeys'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -120,11 +120,16 @@ export default function SessionsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Sessions</h1>
-        <p className="text-sm text-muted-foreground">
-          Your sessions only. Filters are sent to the API.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Sessions</h1>
+          <p className="text-sm text-muted-foreground">
+            Your sessions only. Filters are sent to the API.
+          </p>
+        </div>
+        <Link className={buttonVariants()} to="/sessions/new">
+          New session
+        </Link>
       </div>
 
       <Card>
