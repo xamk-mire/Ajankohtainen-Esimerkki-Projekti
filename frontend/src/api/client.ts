@@ -304,6 +304,26 @@ export function getSession(sessionId: string): Promise<Session> {
   return apiGet<Session>(`/sessions/${sessionId}`)
 }
 
+export type CalendarSession = {
+  id: string
+  name: string
+  session_at: string
+  status: string
+  plan_id: string | null
+}
+
+export function listCalendar(
+  from: string,
+  to: string,
+  planId: string | null,
+): Promise<CalendarSession[]> {
+  const params = new URLSearchParams({ from, to })
+  if (planId) {
+    params.set('plan_id', planId)
+  }
+  return apiGet<CalendarSession[]>(`/calendar?${params.toString()}`)
+}
+
 export function listPlans(): Promise<Plan[]> {
   return apiGet<Plan[]>('/plans')
 }

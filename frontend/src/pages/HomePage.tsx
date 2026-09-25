@@ -59,6 +59,9 @@ export default function HomePage() {
             <Link className="text-primary underline-offset-4 hover:underline" to="/plans">
               Plans
             </Link>
+            <Link className="text-primary underline-offset-4 hover:underline" to="/calendar">
+              Calendar
+            </Link>
           </p>
         </CardContent>
       </Card>

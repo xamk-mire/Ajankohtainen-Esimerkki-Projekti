@@ -23,6 +23,9 @@ export default function Header({ user, onLogout }: HeaderProps) {
           <Link className="text-sm text-muted-foreground hover:text-foreground" to="/plans">
             Plans
           </Link>
+          <Link className="text-sm text-muted-foreground hover:text-foreground" to="/calendar">
+            Calendar
+          </Link>
         </nav>
       </div>
       <div className="flex items-center gap-3">

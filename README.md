@@ -257,6 +257,10 @@ The designer saves metadata plus ordered exercises. The activity selector lists 
 
 Members are your sessions, attached and detached through `plan_id`. Dated sessions are listed earliest first. Unscheduled sessions are in a separate section. The attach list is `GET /sessions` for the current user, so another person's session cannot be chosen. Attaching a session that is already on another plan moves it.
 
+## Calendar
+
+`/calendar` is behind the same login gate. **Month** and **Week** load `GET /calendar` for the visible range. Only your dated sessions appear. An optional plan filter uses `plan_id`. Statuses are visually distinct. **Clone** on a session picks a date and calls `POST /sessions/{id}/clone`: planned values stay, actuals are cleared, and the plan is not copied. There is no Google Calendar sync.
+
 ## Troubleshooting
 
 | Symptom | What to try |

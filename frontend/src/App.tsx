@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './auth/ProtectedRoute'
+import CalendarPage from './pages/CalendarPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import PlanDetailPage from './pages/PlanDetailPage'
@@ -20,6 +21,7 @@ function App() {
         <Route path="/sessions/:sessionId" element={<SessionFormPage />} />
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/plans/:planId" element={<PlanDetailPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
       </Route>
     </Routes>
   )
