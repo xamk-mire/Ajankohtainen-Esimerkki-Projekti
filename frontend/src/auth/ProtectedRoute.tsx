@@ -52,7 +52,7 @@ export default function ProtectedRoute() {
 
   if (state === 'loading') {
     return (
-      <main className="flex min-h-svh items-center justify-center bg-background p-6">
+      <main className="flex min-h-svh items-center justify-center p-6">
         <p className="text-sm text-muted-foreground">Checking session…</p>
       </main>
     )
@@ -64,7 +64,7 @@ export default function ProtectedRoute() {
 
   if (state === 'error' || !user) {
     return (
-      <main className="flex min-h-svh items-center justify-center bg-background p-6">
+      <main className="flex min-h-svh items-center justify-center p-6">
         <p className="text-sm text-muted-foreground">
           Could not verify your session. Refresh the page, or{' '}
           <Link className="text-primary underline-offset-4 hover:underline" to="/login">
@@ -77,7 +77,7 @@ export default function ProtectedRoute() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
+    <div className="flex min-h-svh flex-col">
       <Header user={user} onLogout={handleLogout} />
       <Outlet />
     </div>

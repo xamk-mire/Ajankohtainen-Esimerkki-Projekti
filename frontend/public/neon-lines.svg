@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="bloom" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+    <filter id="mid" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="2.5" />
+    </filter>
+    <radialGradient id="spark-cyan">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="18%" stop-color="#d8fbff" />
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="spark-warm">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="16%" stop-color="#fff1c2" />
+      <stop offset="100%" stop-color="#ff8a00" stop-opacity="0" />
+    </radialGradient>
+    <path id="magenta-a" d="M-80 40 L240 360 L700 360" />
+    <path id="magenta-b" d="M-48 8 L272 328 L732 328" />
+    <path id="cyan-a" d="M-80 640 L360 640 L640 360 L1040 360" />
+    <path id="cyan-b" d="M-80 684 L396 684 L684 412 L1084 412" />
+    <path id="orange-a" d="M1680 70 L1200 70 L920 350 L920 820" />
+    <path id="orange-b" d="M1680 112 L1236 112 L972 392 L972 860" />
+    <path id="pink-a" d="M1680 500 L1260 500 L1000 760 L560 760" />
+    <path id="pink-b" d="M1680 542 L1296 542 L1052 802 L520 802" />
+  </defs>
+
+  <g fill="none" stroke-linejoin="miter" stroke-linecap="butt" stroke-miterlimit="4" filter="url(#bloom)" opacity="0.9">
+    <use href="#magenta-a" stroke="#ff2ad4" stroke-width="26" />
+    <use href="#magenta-b" stroke="#ff2ad4" stroke-width="26" />
+    <use href="#cyan-a" stroke="#00d4ff" stroke-width="26" />
+    <use href="#cyan-b" stroke="#00d4ff" stroke-width="26" />
+    <use href="#orange-a" stroke="#ff8a00" stroke-width="26" />
+    <use href="#orange-b" stroke="#ff8a00" stroke-width="26" />
+    <use href="#pink-a" stroke="#ff2d55" stroke-width="22" />
+    <use href="#pink-b" stroke="#ff2d55" stroke-width="22" />
+  </g>
+
+  <g fill="none" stroke-linejoin="miter" stroke-linecap="butt" stroke-miterlimit="4" filter="url(#mid)">
+    <use href="#magenta-a" stroke="#ff4adf" stroke-width="7" />
+    <use href="#magenta-b" stroke="#ff4adf" stroke-width="7" />
+    <use href="#cyan-a" stroke="#3ae4ff" stroke-width="7" />
+    <use href="#cyan-b" stroke="#3ae4ff" stroke-width="7" />
+    <use href="#orange-a" stroke="#ff9a1f" stroke-width="7" />
+    <use href="#orange-b" stroke="#ff9a1f" stroke-width="7" />
+    <use href="#pink-a" stroke="#ff4d6e" stroke-width="6" />
+    <use href="#pink-b" stroke="#ff4d6e" stroke-width="6" />
+  </g>
+
+  <g fill="none" stroke-linejoin="miter" stroke-linecap="butt" stroke-miterlimit="4">
+    <use href="#magenta-a" stroke="#ffe8fb" stroke-width="2.4" />
+    <use href="#magenta-b" stroke="#ffe8fb" stroke-width="2.4" />
+    <use href="#cyan-a" stroke="#f3fdff" stroke-width="2.4" />
+    <use href="#cyan-b" stroke="#f3fdff" stroke-width="2.4" />
+    <use href="#orange-a" stroke="#fff6e4" stroke-width="2.4" />
+    <use href="#orange-b" stroke="#fff6e4" stroke-width="2.4" />
+    <use href="#pink-a" stroke="#ffe8ee" stroke-width="2.2" />
+    <use href="#pink-b" stroke="#ffe8ee" stroke-width="2.2" />
+  </g>
+
+  <g>
+    <circle cx="240" cy="360" r="22" fill="url(#spark-cyan)" />
+    <circle cx="640" cy="360" r="26" fill="url(#spark-cyan)" />
+    <circle cx="920" cy="350" r="28" fill="url(#spark-warm)" />
+    <circle cx="1260" cy="500" r="16" fill="url(#spark-warm)" />
+  </g>
+</svg>

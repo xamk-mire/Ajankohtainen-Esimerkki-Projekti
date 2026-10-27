@@ -24,7 +24,7 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Wait until `db` is healthy and `api` / `web` are running. Apply the schema and catalog seed:
+Wait until `db` is healthy and `api` / `web` are running. Apply the schema, then reset and seed demonstration data. `init_db` deletes existing app users, sessions, plans, goals, and the catalog before writing them again:
 
 ```powershell
 docker compose exec api alembic upgrade head
@@ -102,18 +102,20 @@ docker compose exec api alembic upgrade head
 
 ### Catalog seed
 
-After migrations, load system units, exercise types, and their unit links (idempotent — safe to run twice):
+After migrations, reset app data and load a fresh demonstration set. This **deletes every app user** (including accounts created in Register), plus sessions, plans, goals, and the exercise catalog, then recreates the catalog and one demo login. It does not drop tables or change the Alembic version.
 
 ```powershell
 docker compose exec api python -m app.db.init_db
 ```
+
+The command prints the demo login: `demo@example.com` / `demo-pass-1`. That user owns Demo stretch, the plan **Demo block**, dated sessions on that plan (so the dashboard and the current calendar show them), one unscheduled session, and two period goals. Running it again wipes the previous rows and writes the same login again.
 
 Sprint 3 uses this catalog. After seed, SQLAdmin should show:
 
 | In `/admin` | What to look for |
 | --- | --- |
 | Unit types | Four system units: `duration_min`, `distance_km`, `reps`, `weight_kg` |
-| Activity types | Exercise-level rows (running, cycling, swimming, hiking, bench_press, curls, face_pull, …) plus `other` |
+| Activity types | Exercise-level rows (running, cycling, swimming, hiking, bench_press, curls, face_pull, …) plus `other`, and Demo stretch owned by the demo user |
 | Activity↔unit links | Running → duration + distance; a strength exercise (e.g. bench press) → reps + weight with `per_set` |
 | Sessions | Name, `user_id`, `session_at`, status, `plan_id` |
 | Session exercises | `session_id`, `activity_type_id`, sort order |
@@ -292,7 +294,7 @@ Members are your sessions, attached and detached through `plan_id`. Dated sessio
 | API cannot reach Postgres from a container | Do not use `localhost` as the DB host **inside** `api` — Compose sets host `db` |
 | `web` fails with `Cannot find package '@tailwindcss/vite'` | The `web_node_modules` volume is stale. Stop Compose, then `docker compose up --build`. The `web` container now runs `npm install` on start. |
 | `relation "users" does not exist` (or similar) | Schema is not applied yet. Rebuild `api` if Alembic is missing, then `docker compose exec api alembic upgrade head` |
-| Empty unit/activity lists in `/admin` | Run the catalog seed: `docker compose exec api python -m app.db.init_db` |
+| Empty unit/activity lists in `/admin` | Run the reset seed: `docker compose exec api python -m app.db.init_db` (this also deletes app users, sessions, plans, and goals) |
 
 ## Coming next
 
